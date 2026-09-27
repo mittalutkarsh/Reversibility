@@ -1,0 +1,10 @@
+batch,status,peak_gb,median_step_s,mean_step_s,p90_step_s,mean_over_median,tokens_per_s_from_median,steps_for_50M_tokens,p99_step_s,steps_kept,wall_s,swapouts_delta,swap_used_delta_gb,note
+8,ok,2.5663,0.79955,0.80007,0.80232,1.001,10245.7,6104,0.80585,40,42.2,0,-0.008,
+16,ok,7.6600,1.64505,1.67702,1.73995,1.019,9959.6,3052,1.88969,40,87.5,120984,0.900,
+24,ok,8.0665,2.48641,2.52236,2.70277,1.014,9884.1,2035,2.75863,40,130.0,134884,0.511,
+32,ok,9.0665,3.45367,3.48875,3.64327,1.010,9487.9,1526,3.88476,40,178.7,511836,1.115,
+40,slow,10.5663,30.44809,146.42080,501.88922,4.809,1345.2,1221,933.57232,16,2701.5,10444663,-1.040,exceeded 900s after 26/50 steps
+48,slow,15.0663,278.49738,nan,nan,nan,176.5,1018,nan,1,919.6,8589551,3.237,exceeded 900s after 1/50 steps | only 1 step(s) measured; dispersion stats suppressed (n<10)
+64,slow,19.0974,165.14092,nan,nan,nan,396.8,763,nan,1,929.4,9851027,0.430,exceeded 900s after 1/50 steps | only 1 step(s) measured; dispersion stats suppressed (n<10)
+80,slow,18.9138,272.90178,nan,nan,nan,300.2,611,nan,1,968.9,12444688,-4.718,exceeded 900s after 1/50 steps | only 1 step(s) measured; dispersion stats suppressed (n<10)
+96,oom,20.0231,nan,nan,nan,nan,nan,509,nan,0,310.9,3720929,3.682,"MPS backend out of memory (MPS allocated: 14.40 GiB, other allocations: 3.26 GiB, max allowed: 20.13 GiB). Tried to allocate 3.00 GiB on private pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 to disab"

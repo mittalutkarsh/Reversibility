@@ -1,0 +1,5 @@
+run_name,variant,status,batch,context,steps_done,steps_planned,tokens_seen,seed,final_val_loss_mean_last5,val_points,best_val_loss,last_train_loss,median_step_time_s,tokens_per_s,peak_gb,wall_s,params,lr_max,lr_min,finished_utc,note,mean_over_median_metrics,mean_over_median_wall,metrics_samples
+01_baseline_bs8,baseline,completed,8,1024,6104,6104,50003968,1337,1.768609,31,1.759929,1.810577,0.6392,2439.4,5.5741,20513.4,19957248,0.0003,3e-05,2026-09-26T19:53:40.541262+00:00,,1.080,5.258,124
+02_euler_bs8,euler,completed,8,1024,6104,6104,50003968,1337,1.749236,31,1.741467,1.785710,0.6514,4196.2,5.5741,12003.0,19957248,0.0003,3e-05,2026-09-26T23:13:48.369362+00:00,,12.666,3.019,124
+03_midpoint_rev_bs8,midpoint_rev,completed,8,1024,6104,6104,50003968,1337,1.768222,31,1.759779,1.805673,0.8138,9673.2,3.8173,5309.3,19957248,0.0003,3e-05,2026-09-27T00:42:21.896416+00:00,,1.036,1.069,124
+04_midpoint_rev_bs32,midpoint_rev,completed,32,1024,1526,1526,50003968,1337,2.086956,8,2.008500,2.036723,3.5756,2509.2,9.3173,19823.8,19957248,0.0003,3e-05,2026-09-27T10:15:30.087279+00:00,,1.261,3.633,32

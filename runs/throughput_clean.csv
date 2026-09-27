@@ -1,0 +1,4 @@
+variant,batch,median_step_s,mean_step_s,p90_step_s,p99_step_s,mean_over_median,tokens_per_s_from_median,peak_gb,status,steps_kept,note
+baseline,8,0.65559,0.66838,0.69367,0.83261,1.020,12495.7,5.3232,ok,150,
+euler,8,0.64371,0.64721,0.69018,0.69444,1.005,12726.2,5.3232,ok,150,
+midpoint_rev,8,0.80070,0.80136,0.80356,0.81024,1.001,10231.0,2.5663,ok,150,

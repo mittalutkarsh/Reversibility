@@ -1,0 +1,103 @@
+==============================================================================
+GRADIENT CHECK — midpoint (autograd) vs midpoint_rev (reconstructing)
+==============================================================================
+seed        : 1337
+device      : mps
+precision   : fp32
+batch       : 8 x 1024 from data/train.bin
+rel tol     : 1e-04 on max|gA-gB| / max|gA|, every tensor
+
+------------------------------------------------------------------------------
+losses
+------------------------------------------------------------------------------
+  midpoint      : 9.1995124817
+  midpoint_rev  : 9.1995134354
+  abs diff      : 9.537e-07   (tol 1e-05)
+  params identical before backward: max delta 0.000e+00
+  losses match  : True
+
+------------------------------------------------------------------------------
+parameter                              max|gA|  max abs diff  max rel diff
+------------------------------------------------------------------------------
+tok_emb.weight                       2.431e-01     2.161e-07     8.889e-07
+blocks.0.ln1.weight                  6.883e-03     2.369e-08     3.442e-06
+blocks.0.ln1.bias                    3.586e-02     5.215e-08     1.454e-06
+blocks.0.attn.qkv.weight             2.618e-02     1.071e-07     4.090e-06
+blocks.0.attn.qkv.bias               7.463e-02     9.686e-08     1.298e-06
+blocks.0.attn.proj.weight            3.689e-02     1.192e-07     3.232e-06
+blocks.0.attn.proj.bias              1.744e-01     2.533e-07     1.452e-06
+blocks.0.ln2.weight                  1.103e-02     2.701e-08     2.449e-06
+blocks.0.ln2.bias                    7.528e-03     9.779e-09     1.299e-06
+blocks.0.mlp.fc.weight               3.268e-02     9.220e-08     2.821e-06
+blocks.0.mlp.fc.bias                 1.351e-02     1.956e-08     1.447e-06
+blocks.0.mlp.proj.weight             3.171e-02     9.686e-08     3.055e-06
+blocks.0.mlp.proj.bias               3.604e-02     3.725e-09     1.034e-07
+blocks.1.ln1.weight                  4.652e-03     5.966e-10     1.282e-07
+blocks.1.ln1.bias                    5.606e-03     6.985e-10     1.246e-07
+blocks.1.attn.qkv.weight             2.321e-02     8.382e-09     3.612e-07
+blocks.1.attn.qkv.bias               1.197e-02     1.222e-09     1.021e-07
+blocks.1.attn.proj.weight            2.294e-02     1.490e-08     6.495e-07
+blocks.1.attn.proj.bias              2.550e-02     2.794e-09     1.096e-07
+blocks.1.ln2.weight                  6.612e-03     6.985e-10     1.056e-07
+blocks.1.ln2.bias                    4.673e-03     9.313e-10     1.993e-07
+blocks.1.mlp.fc.weight               1.659e-02     1.024e-08     6.176e-07
+blocks.1.mlp.fc.bias                 7.204e-03     9.313e-10     1.293e-07
+blocks.1.mlp.proj.weight             1.663e-02     1.024e-08     6.161e-07
+blocks.1.mlp.proj.bias               1.869e-02     3.725e-09     1.993e-07
+blocks.2.ln1.weight                  3.413e-03     6.985e-10     2.047e-07
+blocks.2.ln1.bias                    3.496e-03     4.657e-10     1.332e-07
+blocks.2.attn.qkv.weight             1.783e-02     6.519e-09     3.657e-07
+blocks.2.attn.qkv.bias               6.817e-03     9.313e-10     1.366e-07
+blocks.2.attn.proj.weight            1.754e-02     1.211e-08     6.901e-07
+blocks.2.attn.proj.bias              1.747e-02     1.863e-09     1.066e-07
+blocks.2.ln2.weight                  3.588e-03     9.313e-10     2.596e-07
+blocks.2.ln2.bias                    3.587e-03     4.657e-10     1.298e-07
+blocks.2.mlp.fc.weight               1.477e-02     7.451e-09     5.044e-07
+blocks.2.mlp.fc.bias                 4.701e-03     5.821e-10     1.238e-07
+blocks.2.mlp.proj.weight             1.426e-02     1.024e-08     7.184e-07
+blocks.2.mlp.proj.bias               1.276e-02     1.863e-09     1.459e-07
+blocks.3.ln1.weight                  3.276e-03     3.492e-10     1.066e-07
+blocks.3.ln1.bias                    3.481e-03     2.910e-10     8.361e-08
+blocks.3.attn.qkv.weight             1.793e-02     4.657e-09     2.597e-07
+blocks.3.attn.qkv.bias               7.182e-03     9.313e-10     1.297e-07
+blocks.3.attn.proj.weight            1.508e-02     7.916e-09     5.248e-07
+blocks.3.attn.proj.bias              1.724e-02     1.863e-09     1.080e-07
+blocks.3.ln2.weight                  3.956e-03     4.075e-10     1.030e-07
+blocks.3.ln2.bias                    3.068e-03     3.492e-10     1.138e-07
+blocks.3.mlp.fc.weight               1.071e-02     6.519e-09     6.086e-07
+blocks.3.mlp.fc.bias                 4.449e-03     4.657e-10     1.047e-07
+blocks.3.mlp.proj.weight             1.107e-02     8.382e-09     7.571e-07
+blocks.3.mlp.proj.bias               1.097e-02     1.863e-09     1.697e-07
+blocks.4.ln1.weight                  4.806e-03     4.657e-10     9.690e-08
+blocks.4.ln1.bias                    3.438e-03     4.657e-10     1.354e-07
+blocks.4.attn.qkv.weight             1.537e-02     4.657e-09     3.029e-07
+blocks.4.attn.qkv.bias               6.755e-03     9.313e-10     1.379e-07
+blocks.4.attn.proj.weight            1.466e-02     7.451e-09     5.081e-07
+blocks.4.attn.proj.bias              1.602e-02     1.863e-09     1.162e-07
+blocks.4.ln2.weight                  2.782e-03     4.657e-10     1.674e-07
+blocks.4.ln2.bias                    2.736e-03     2.328e-10     8.511e-08
+blocks.4.mlp.fc.weight               8.612e-03     5.122e-09     5.948e-07
+blocks.4.mlp.fc.bias                 3.630e-03     4.657e-10     1.283e-07
+blocks.4.mlp.proj.weight             1.193e-02     5.588e-09     4.683e-07
+blocks.4.mlp.proj.bias               1.009e-02     9.313e-10     9.227e-08
+ln_f.weight                          1.115e-02     9.313e-10     8.353e-08
+ln_f.bias                            7.303e-03     9.313e-10     1.275e-07
+------------------------------------------------------------------------------
+
+==============================================================================
+SUMMARY — record these
+==============================================================================
+device / precision    : mps / fp32
+batch                 : 8 x 1024
+parameter tensors     : 63
+loss (midpoint)       : 9.1995124817
+loss (midpoint_rev)   : 9.1995134354
+loss abs diff         : 9.537e-07
+max abs grad diff     : 2.533e-07
+max rel grad diff     : 4.090e-06   (tol 1e-04)
+worst tensor          : blocks.0.attn.qkv.weight
+tensors over tol      : 0 of 63
+GATE                  : PASS
+==============================================================================
+
+saved to /Users/umittal/Desktop/Reversibility/runs/gradient_check.txt

@@ -1,0 +1,13 @@
+variant,batch,context,steps_requested,steps_done,status,peak_bytes,peak_gb,tokens_per_s,tokens_per_s_warm,wall_s,isolated,poll_ms,note
+baseline,8,1024,20,20,ok,5715607552,5.3231,11878.3,12635.6,13.79,yes,100,
+baseline,16,1024,20,20,ok,10278961152,9.5730,10864.7,11307.9,30.16,yes,100,
+baseline,32,1024,20,2,timeout,17266688000,16.0809,0.0,0.0,1331.22,yes,100,exceeded 600s after 2/20 steps; peak is from the partial run
+baseline,64,1024,20,0,skipped,0,0.0000,0.0,0.0,0.00,yes,100,larger than batch 32 which timed out
+midpoint,8,1024,20,20,ok,5715574784,5.3230,12526.3,12776.3,13.08,yes,100,
+midpoint,16,1024,20,20,ok,10279075840,9.5731,9169.0,9379.6,35.74,yes,100,
+midpoint,32,1024,20,2,timeout,19951009792,18.5808,0.0,0.0,622.65,yes,100,exceeded 600s after 2/20 steps; peak is from the partial run
+midpoint,64,1024,20,0,skipped,0,0.0000,0.0,0.0,0.00,yes,100,larger than batch 32 which timed out
+midpoint_rev,8,1024,20,20,ok,2755444736,2.5662,10060.1,10229.7,16.29,yes,100,
+midpoint_rev,16,1024,20,20,ok,8224833536,7.6600,9304.5,9400.4,35.22,yes,100,
+midpoint_rev,32,1024,20,20,ok,9734766592,9.0662,1434.1,1373.7,456.97,yes,100,
+midpoint_rev,64,1024,20,2,timeout,20874838016,19.4412,0.0,0.0,691.92,yes,100,exceeded 600s after 2/20 steps; peak is from the partial run

@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------- data
+# Regenerate with:  python3 scripts/prepare_data.py   (~2 min)
+# It re-downloads the 250 MB slice via an HTTP Range request and rebuilds
+# the token files. Together these are ~440 MB and do not belong in git.
+data/*.txt
+data/*.bin
+
+# ---------------------------------------------------------------- python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ---------------------------------------------------------------- editors / OS
+.DS_Store
+.idea/
+.vscode/
+.qodo/
+
+# ---------------------------------------------------------------- transient
+# Per-config checkpoints written by measure_memory.py / sweep_batch.py while a
+# subprocess runs; deleted on completion, present only mid-sweep.
+runs/.partial_*.json
+runs/.sweep_*.json
+
+# ---------------------------------------------------------------------------
+# DELIBERATELY TRACKED — do not add these to the ignore list:
+#
+#   data/tokenizer.json        544K  needed to reproduce token ids exactly;
+#                                    retraining BPE is not guaranteed to give
+#                                    a byte-identical vocab
+#   runs/figures/*.png         ~490K report figures, embedded in README.md
+#   runs/**/config.json              seeds, hyperparameters, first-batch ids
+#   runs/**/metrics.csv              per-step training logs
+#   runs/**/val.csv                  validation curves
+#   runs/*.csv  runs/*.txt           gate outputs and measurement tables
+#   experiments.csv                  one row per run
+# ---------------------------------------------------------------------------

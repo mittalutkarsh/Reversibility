@@ -1,0 +1,5 @@
+run,variant,batch,steps,final_val_loss,tokens_per_s,peak_gb,median_step_s,mean_over_median,tokens_per_s_source,tokens_per_s_source_file,tokens_per_s_from_run,mean_over_median_wall,metrics_samples,tokens_seen,wall_s,status
+01_baseline_bs8,baseline,8,6104,1.768609,12495.7,5.57,0.6392,1.080,clean measurement,"throughput_clean.csv (batch 8, 200 steps)",2439.4,5.258,124,50003968,20513.4,completed
+02_euler_bs8,euler,8,6104,1.749236,12726.2,5.57,0.6514,12.666,clean measurement,"throughput_clean.csv (batch 8, 200 steps)",4196.2,3.019,124,50003968,12003.0,completed
+03_midpoint_rev_bs8,midpoint_rev,8,6104,1.768222,10231.0,3.82,0.8138,1.036,clean measurement,"throughput_clean.csv (batch 8, 200 steps)",9673.2,1.069,124,50003968,5309.3,completed
+04_midpoint_rev_bs32,midpoint_rev,32,1526,2.086956,9487.9,9.32,3.5756,1.261,clean measurement,"batch_sweep.csv (batch 32, 50 steps)",2509.2,3.633,32,50003968,19823.8,completed

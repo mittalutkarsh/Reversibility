@@ -1,0 +1,111 @@
+========================================================================
+REVERSIBILITY CHECK
+========================================================================
+seed        : 1337
+device      : mps
+batch       : 8 x 1024 tokens from data/train.bin
+h / blend   : 0.25 / 0.5  (not tuned)
+fp32 tol    : 1e-04
+growth rule : flag >=3 consecutive increases totalling >3.0x, floored at 8 ULP
+
+batch token ids: min 0, max 8056, shape (8, 1024)
+
+========================================================================
+FP32
+========================================================================
+  euler / fp32 — reconstructing 5 states, chained from the final state
+  walk  recovers p[l]       max |err|       rel err
+  ------------------------------------------------------------
+  0     p[4]                1.430e-01     2.288e-01
+  1     p[3]                2.350e-01     4.003e-01
+  2     p[2]                3.431e-01     7.404e-01
+  3     p[1]                4.897e-01     1.481e+00
+  4     p[0]                6.531e-01     6.544e+00
+  ------------------------------------------------------------
+  max error over all layers : 6.531e-01
+  error ratio last/first    : 4.566e+00
+  8-ULP floor (fp32)        : 9.537e-07   (5/5 layers above it)
+  longest monotonic run     : 4 consecutive increase(s), 4.57x total
+  growth verdict            : GROWING   (flag at >=3 increases and >3.0x)
+
+  midpoint / fp32 — reconstructing 4 states, chained from the final pair
+  walk  recovers p[l]       max |err|       rel err
+  ------------------------------------------------------------
+  0     p[3]                1.192e-07     9.013e-08
+  1     p[2]                5.960e-07     8.670e-07
+  2     p[1]                7.972e-07     6.524e-07
+  3     p[0]                9.574e-07     9.594e-06
+  ------------------------------------------------------------
+  max error over all layers : 9.574e-07
+  error ratio last/first    : 8.031e+00
+  8-ULP floor (fp32)        : 9.537e-07   (1/4 layers above it)
+  longest monotonic run     : 1 consecutive increase(s), 1.00x total
+  growth verdict            : not growing   (flag at >=3 increases and >3.0x)
+
+========================================================================
+BF16
+========================================================================
+  euler / bf16 — reconstructing 5 states, chained from the final state
+  walk  recovers p[l]       max |err|       rel err
+  ------------------------------------------------------------
+  0     p[4]                1.426e-01     2.281e-01
+  1     p[3]                2.354e-01     3.990e-01
+  2     p[2]                3.418e-01     7.384e-01
+  3     p[1]                4.935e-01     1.495e+00
+  4     p[0]                6.554e-01     6.580e+00
+  ------------------------------------------------------------
+  max error over all layers : 6.554e-01
+  error ratio last/first    : 4.597e+00
+  8-ULP floor (bf16)        : 3.125e-02   (5/5 layers above it)
+  longest monotonic run     : 4 consecutive increase(s), 4.60x total
+  growth verdict            : GROWING   (flag at >=3 increases and >3.0x)
+
+  midpoint / bf16 — reconstructing 4 states, chained from the final pair
+  walk  recovers p[l]       max |err|       rel err
+  ------------------------------------------------------------
+  0     p[3]                7.812e-03     5.882e-03
+  1     p[2]                5.859e-03     8.475e-03
+  2     p[1]                1.172e-02     9.615e-03
+  3     p[0]                1.263e-02     1.268e-01
+  ------------------------------------------------------------
+  max error over all layers : 1.263e-02
+  error ratio last/first    : 1.617e+00
+  8-ULP floor (bf16)        : 3.125e-02   (0/4 layers above it)
+  longest monotonic run     : none above the floor
+  growth verdict            : not growing   (flag at >=3 increases and >3.0x)
+
+========================================================================
+VERDICT (fp32 is the gate; bf16 is reported for the record)
+========================================================================
+  euler      fp32  FAIL   <- max err 6.531e-01 >= 1e-04; per-layer error grows on the way down
+  midpoint   fp32  PASS
+
+  euler FAILS by construction, not by tuning. p[l+1] = p[l] + h*f(p[l])
+  inverts to p[l] = p[l+1] - h*f(p[l]), where f is evaluated at the
+  unknown state. No closed-form inverse exists. The naive explicit
+  substitution used above is an approximation, and its error is what
+  is tabulated. Shrinking h would shrink the error without making the
+  map invertible, so h was left at 0.25.
+
+========================================================================
+SUMMARY — record these
+========================================================================
+device                       : mps
+batch                        : 8 x 1024
+h / blend                    : 0.25 / 0.5
+
+variant   dtype        max |err|    growing?   verdict
+------------------------------------------------------------------------
+euler     fp32         6.531e-01         yes      FAIL
+euler     bf16         6.554e-01         yes         -
+midpoint  fp32         9.574e-07          no      PASS
+midpoint  bf16         1.263e-02          no         -
+------------------------------------------------------------------------
+euler exactly invertible     : False (implicit inverse, see above)
+midpoint exactly invertible  : True  (needs an adjacent state pair)
+midpoint bf16 / fp32 error   : 13196.5x worse -> train the
+                               reversible stack in fp32
+GATE (midpoint fp32)         : PASS
+========================================================================
+
+saved to /Users/umittal/Desktop/Reversibility/runs/reversibility_check.txt
