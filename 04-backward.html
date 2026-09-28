@@ -1,0 +1,324 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The reversible backward pass — Reversibility</title>
+<style>
+/* Rack & Ledger */
+:root{
+  --ink:#1C1F22; --ink2:#212528; --panel:#1A1E22; --rail:#2E3337;
+  --cream:#EDEAE3; --cream-dim:#C4C8CC; --cream-mute:#8A9298;
+  --copper:#B87333; --copper-lt:#D19A5E; --gold:#E8C468;
+  --b1:#3D8EA8; --b2:#7B4FD6; --b3:#3F8F52; --b4:#D18B32; --hot:#C94570;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,"Segoe UI",Inter,sans-serif;
+  --cond:"SF Compact Display",-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream-dim);
+  font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:34px 26px 90px}
+h1{font-family:var(--cond);font-size:40px;line-height:1.12;color:var(--cream);
+  margin:6px 0 22px;font-weight:650;letter-spacing:-.01em}
+h2{font-family:var(--cond);font-size:26px;color:var(--cream);margin:42px 0 14px;font-weight:600}
+h3{font-family:var(--cond);font-size:19px;color:var(--cream);margin:28px 0 10px;font-weight:600}
+h4{font-family:var(--cond);font-size:16px;color:var(--cream);margin:0 0 8px;font-weight:600}
+p{margin:0 0 15px}
+a{color:var(--copper-lt)}
+strong{color:var(--cream)}
+em{color:var(--cream);font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:#22262A;padding:1px 5px;border-radius:3px;color:var(--gold)}
+.slot{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--copper);text-transform:uppercase}
+.lede{font-size:18px;color:var(--cream);line-height:1.6}
+
+/* nav */
+nav{background:#15181B;border-bottom:1px solid var(--rail);position:sticky;top:0;z-index:50}
+.navin{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow-x:auto}
+.blade{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:11px 12px;text-decoration:none;
+  color:var(--cream-mute);font-size:12.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.blade u{font-family:var(--mono);font-size:10.5px;text-decoration:none;color:var(--copper);opacity:.8}
+.blade:hover{color:var(--cream);background:#1B1F23}
+.blade.on{color:var(--cream);border-bottom-color:var(--copper);background:#1B1F23}
+
+/* equation display block */
+.eq{background:#15181B;border:1px solid var(--rail);border-left:3px solid var(--copper);
+  border-radius:3px;padding:16px 20px;margin:0 0 20px;font-family:var(--mono);
+  font-size:15px;color:var(--gold);overflow-x:auto}
+.eq .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--cream-mute)}
+.eq b{color:var(--cream)}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--rail);border-radius:4px;padding:18px 20px;margin:0 0 20px}
+.nameplate{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:10px}
+pre.w{font-family:var(--mono);font-size:13px;line-height:1.75;color:var(--cream-dim);margin:0;overflow-x:auto}
+pre.w b{color:var(--gold)}
+pre.w i{color:var(--hot);font-style:normal}
+pre.w u{color:var(--b3);text-decoration:none}
+
+/* callouts */
+.call{border-left:3px solid var(--b1);background:rgba(61,142,168,.07);padding:14px 17px;margin:0 0 20px;border-radius:3px}
+.call.warn{border-left-color:var(--hot);background:rgba(201,69,112,.07)}
+.call.good{border-left-color:var(--b3);background:rgba(63,143,82,.07)}
+.call h4{color:var(--cream)}
+.call p:last-child{margin-bottom:0}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:14px}
+caption{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--copper);text-transform:uppercase;padding-bottom:9px}
+th{text-align:left;font-family:var(--cond);font-size:12.5px;color:var(--cream-mute);
+  font-weight:600;border-bottom:1px solid var(--rail);padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #24282C;color:var(--cream-dim)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px}
+tr.total td{border-bottom:none;border-top:1px solid var(--copper);color:var(--cream)}
+tr.hi td{background:rgba(232,196,104,.06)}
+.ok{color:#6FC888}.no{color:#E07290}.mid{color:var(--gold)}
+
+/* by-hand grids */
+.vec{display:inline-flex;gap:3px;vertical-align:middle;margin:0 3px}
+.vec span{font-family:var(--mono);font-size:12.5px;min-width:52px;text-align:right;
+  padding:4px 7px;background:#22262A;border:1px solid var(--rail);border-radius:2px;color:var(--cream)}
+.vec.b1 span{border-color:var(--b1);color:#7FC0D4}
+.vec.b2 span{border-color:var(--b2);color:#A98BE8}
+.vec.b3 span{border-color:var(--b3);color:#6FC888}
+.vec.b4 span{border-color:var(--b4);color:#E8B270}
+.vec.hot span{border-color:var(--hot);color:#E88AA3}
+.byhand{background:#15181B;border:1px solid var(--rail);border-radius:4px;padding:16px 18px;margin:0 0 20px}
+.byhand .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px;font-size:13px}
+.byhand .lbl{font-family:var(--mono);font-size:12px;color:var(--cream-mute);min-width:74px}
+.byhand .op{font-family:var(--mono);color:var(--copper)}
+
+/* widgets */
+.w{background:var(--panel);border:1px solid var(--rail);border-radius:5px;padding:18px 20px;margin:0 0 22px}
+.wbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px;
+  padding-bottom:13px;border-bottom:1px solid var(--rail)}
+.wkey{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--cream-mute);text-transform:uppercase}
+.wbtns{display:inline-flex;gap:3px}
+.opt{font-family:var(--mono);font-size:12.5px;background:#22262A;color:var(--cream-dim);
+  border:1px solid var(--rail);border-radius:14px;padding:5px 12px;cursor:pointer}
+.opt:hover{background:#2A2F34;color:var(--cream)}
+.opt.on{background:var(--copper);border-color:var(--copper);color:#14181B;font-weight:600}
+.wbtns.wide .opt{border-radius:4px;padding:5px 13px}
+input[type=range]{accent-color:var(--copper);width:150px;vertical-align:middle}
+.wdiv{width:1px;height:20px;background:var(--rail)}
+.wcap{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:11px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.stat{flex:1;min-width:140px;background:#22262A;border:1px solid var(--rail);border-radius:4px;padding:11px 13px}
+.stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--gold);line-height:1.2}
+.stat span{display:block;font-size:11.5px;color:var(--cream-mute);margin-top:4px}
+.under{font-size:13px;color:var(--cream-dim);border-top:1px solid var(--rail);margin-top:12px;padding-top:11px}
+.under b{color:var(--gold);font-family:var(--mono)}
+svg.d{width:100%;height:auto;display:block}
+svg.d text{font-family:var(--sans)}
+
+/* code blocks */
+.code{background:#15181B;border:1px solid var(--rail);border-radius:4px;margin:0 0 20px;overflow:hidden}
+.code .hd{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--copper);
+  background:#1A1E22;padding:8px 14px;border-bottom:1px solid var(--rail);text-transform:uppercase}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;
+  line-height:1.7;color:var(--cream-dim);overflow-x:auto}
+.code pre .c{color:var(--cream-mute)}
+.code pre .k{color:var(--b2)}
+.code pre .s{color:var(--b3)}
+.code pre .h{color:var(--gold);background:rgba(232,196,104,.09)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px}
+@media(max-width:760px){.ba{grid-template-columns:1fr}}
+
+/* toc */
+.toc-row{display:flex;gap:14px;text-decoration:none;padding:14px 4px;border-bottom:1px solid #24282C}
+.toc-row:hover{background:#1B1F23}
+.toc-row u{font-family:var(--mono);font-size:12px;color:var(--copper);text-decoration:none;min-width:24px}
+.toc-row b{display:block;color:var(--cream);font-family:var(--cond);font-size:17px;font-weight:600}
+.toc-row p{margin:3px 0 0;font-size:13.5px;color:var(--cream-mute)}
+
+/* carry */
+.carry{background:rgba(184,115,51,.08);border-left:3px solid var(--copper);
+  padding:14px 17px;border-radius:3px;margin:26px 0 0;font-size:14.5px}
+.carry b{color:var(--copper-lt)}
+
+/* pager */
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:46px;
+  padding-top:22px;border-top:1px solid var(--rail)}
+.pager a{flex:1;text-decoration:none;color:var(--cream);background:var(--panel);
+  border:1px solid var(--rail);border-radius:4px;padding:12px 15px;font-family:var(--cond);font-size:15px}
+.pager a:hover{border-color:var(--copper)}
+.pager a span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;color:var(--copper)}
+.pager a.next{text-align:right}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--rail);border-radius:4px}
+figcaption{font-size:12.5px;color:var(--cream-mute);margin-top:8px}
+
+</style></head><body>
+<nav><div class="navin"><a class="blade" href="index.html"><u>00</u>Contents</a><a class="blade" href="01-memory.html"><u>01</u>Activation memory</a><a class="blade" href="02-rules.html"><u>02</u>The three rules</a><a class="blade" href="03-inverse.html"><u>03</u>Why one inverts</a><a class="blade on" href="04-backward.html"><u>04</u>Reversible backward</a><a class="blade" href="05-code.html"><u>05</u>The code</a><a class="blade" href="06-experiments.html"><u>06</u>The experiments</a><a class="blade" href="07-ceiling.html"><u>07</u>Batch ceiling</a><a class="blade" href="08-step-vs-token.html"><u>08</u>Step vs token</a><a class="blade" href="09-findings.html"><u>09</u>Findings</a></div></nav>
+<main><div class="slot">04 / THE MATHS</div><h1>The reversible backward pass</h1>
+<div class="eq">
+dL/dp<sub>l&minus;1</sub>  +=  g<sub>l+1</sub>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8A9298">the identity path &mdash; exact, no computation</span><br>
+dL/dp<sub>l</sub> &nbsp;&nbsp;+=  2h &middot; vjp(f, p<sub>l</sub>, g<sub>l+1</sub>)
+&nbsp;&nbsp;<span style="color:#8A9298">the path through the block</span>
+<span class="note">g<sub>l+1</sub> is the gradient arriving at state l+1. vjp is a vector-Jacobian
+product &mdash; what autograd computes when it pushes a gradient back through a function.</span>
+</div>
+
+<p>Page 03 showed the rule can be inverted. This page turns that into an actual backward pass that
+<strong>saves memory</strong>, and proves the gradients survive it.</p>
+
+<h2>One recomputation, two jobs</h2>
+
+<p>Walking down the stack at layer <em>l</em>, we recompute <code>f(p[l])</code> once. That single
+evaluation does two separate things:</p>
+
+<svg class="d" viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg">
+<rect x="330" y="76" width="200" height="48" rx="5" fill="rgba(184,115,51,.15)" stroke="#B87333" stroke-width="1.6"/>
+<text x="430" y="97" text-anchor="middle" font-size="13.5" fill="#EDEAE3" font-family="ui-monospace">recompute</text>
+<text x="430" y="114" text-anchor="middle" font-size="13.5" fill="#E8C468" font-family="ui-monospace">f(p[l])</text>
+<text x="0" y="20" font-size="11" fill="#8A9298">WE HOLD</text>
+<rect x="0" y="30" width="230" height="40" rx="4" fill="#1A1E22" stroke="#3F8F52"/>
+<text x="14" y="55" font-size="12.5" fill="#6FC888" font-family="ui-monospace">p[l+1], p[l], g[l+1]</text>
+<path d="M230 50 C 290 50, 300 82, 328 88" fill="none" stroke="#3F8F52" stroke-width="1.6" marker-end="url(#m1)"/>
+<rect x="600" y="20" width="280" height="50" rx="4" fill="rgba(123,79,214,.12)" stroke="#7B4FD6"/>
+<text x="614" y="40" font-size="12" fill="#A98BE8">JOB 1 &mdash; reconstruct</text>
+<text x="614" y="58" font-size="12.5" fill="#EDEAE3" font-family="ui-monospace">p[l-1] = p[l+1] - 2h&middot;f(p[l])</text>
+<rect x="600" y="130" width="280" height="50" rx="4" fill="rgba(61,142,168,.12)" stroke="#3D8EA8"/>
+<text x="614" y="150" font-size="12" fill="#7FC0D4">JOB 2 &mdash; gradients</text>
+<text x="614" y="168" font-size="12.5" fill="#EDEAE3" font-family="ui-monospace">vjp through this layer</text>
+<path d="M530 92 C 560 88, 570 60, 596 48" fill="none" stroke="#7B4FD6" stroke-width="1.6" marker-end="url(#m2)"/>
+<path d="M530 108 C 560 112, 570 142, 596 152" fill="none" stroke="#3D8EA8" stroke-width="1.6" marker-end="url(#m3)"/>
+<defs>
+<marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3F8F52"/></marker>
+<marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#7B4FD6"/></marker>
+<marker id="m3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3D8EA8"/></marker>
+</defs>
+</svg>
+
+<p>The forward pass saved <strong>only the final adjacent pair</strong> — no per-layer states. Everything
+else is rebuilt as the walk proceeds, and discarded again immediately.</p>
+
+<h2>Why one downward sweep is enough</h2>
+
+<p>Layer <em>l</em> maps <code>(p[l-1], p[l]) → p[l+1]</code>, so it sends gradient to <strong>two</strong>
+states. Read the other way round: <code>g[k]</code> only ever receives from layer <em>k</em> and layer
+<em>k+1</em>.</p>
+
+<div class="call good"><h4>The ordering works out</h4>
+<p>Walking down from <em>l</em> = L&minus;1, layer <em>k+1</em> is always processed <b>before</b>
+layer <em>k</em>. So by the time layer <em>k</em> is done, <code>g[k]</code> has received both of its
+contributions and is complete.</p>
+<p>That is why a single sweep is <b>exact</b> rather than approximate. No state needs revisiting.</p></div>
+
+<h2>Worked, on two elements and two layers</h2>
+
+<p>Take <code>f(x) = 0.5x + 1</code>, so the Jacobian of f is <code>0.5·I</code> and a vjp is just
+multiplication by 0.5. With h = 0.25, <code>2h = 0.5</code>.</p>
+
+<div class="byhand">
+<div class="row"><span class="lbl">forward</span><span class="op">p<sub>0</sub> =</span><span class="vec "><span>2</span><span>4</span></span><span class="op">p<sub>1</sub> =</span><span class="vec "><span>4</span><span>7</span></span><span class="op">bootstrap</span></div>
+<div class="row"><span class="lbl"></span><span class="op">f(p<sub>1</sub>) =</span><span class="vec b1"><span>3</span><span>4.5</span></span><span class="op">p<sub>2</sub> = p<sub>0</sub> + 0.5&middot;f(p<sub>1</sub>) =</span><span class="vec "><span>3.5</span><span>6.25</span></span></div>
+<div class="row" style="margin-top:12px"><span class="lbl">arrives</span><span class="op">g<sub>2</sub> =</span><span class="vec b4"><span>1</span><span>1</span></span><span class="op">gradient at the top state</span></div>
+<div class="row" style="margin-top:12px"><span class="lbl">layer 1</span><span class="op">identity path &rarr; g<sub>0</sub> +=</span><span class="vec b2"><span>1</span><span>1</span></span></div>
+<div class="row"><span class="lbl"></span><span class="op">block path &rarr; g<sub>1</sub> += 2h &middot; 0.5 &middot; g<sub>2</sub> = 0.5 &times; 0.5 &times;</span><span class="vec b4"><span>1</span><span>1</span></span></div>
+<div class="row"><span class="lbl">&rarr;</span><span class="vec b1"><span>0.25</span><span>0.25</span></span><span class="op">g<sub>1</sub> is now complete</span></div>
+<div class="row" style="margin-top:12px"><span class="lbl">layer 0</span><span class="op">bootstrap carries both paths: g<sub>0</sub> += g<sub>1</sub> + 0.5&middot;g<sub>1</sub></span></div>
+<div class="row"><span class="lbl">&rarr;</span><span class="vec b3"><span>1.375</span><span>1.375</span></span><span class="op">= 1 + 0.25 + 0.125</span></div>
+</div>
+
+<p>Each gradient was finished before it was needed. <strong>No state was visited twice.</strong></p>
+
+<h2>The measured result</h2>
+
+<p>The same model was run two ways on one batch: once with ordinary autograd storing everything, once
+with the reversible backward. Then every parameter gradient was compared.</p>
+
+<table><caption>Gradient equivalence gate</caption>
+<thead><tr><th></th><th class="n">Value</th></tr></thead>
+<tbody>
+<tr><td>loss, standard autograd</td><td class="n">9.1995124817</td></tr>
+<tr><td>loss, reversible backward</td><td class="n">9.1995134354</td></tr>
+<tr><td>max absolute gradient difference</td><td class="n">2.533e&minus;07</td></tr>
+<tr><td><b>max relative difference</b></td><td class="n mid">4.090e&minus;06</td></tr>
+<tr><td>tolerance</td><td class="n">1e&minus;04</td></tr>
+<tr class="total"><td>tensors over tolerance</td><td class="n ok">0 of 63 &mdash; PASS</td></tr>
+</tbody></table>
+
+<div class="call"><h4>The spread across tensors is itself a check</h4>
+<p>Blocks 1 to 4 differ by about <b>1e&minus;07</b>. Block 0 differs by about <b>3e&minus;06</b>,
+thirty times more.</p>
+<p>That is the right shape: <b>block 0's input is the most-reconstructed state</b>, so it accumulates
+the most error. A flat profile would have suggested the test was not exercising the reconstruction
+at all.</p></div>
+
+<h2>Step through the walk</h2>
+
+<p>Press Step. The left column is what a reversible backward holds; the right is what the baseline
+holds at the same moment.</p>
+
+<div class="w">
+<div class="wbar"><span class="wkey">LAYERS</span>
+<input type="range" id="k-l" min="3" max="10" step="1" value="5"><span class="wkey" id="k-lv">5</span>
+<span class="wdiv"></span>
+<button class="opt on" id="k-step">Step &rsaquo;</button>
+<span class="wkey" id="k-pos"></span></div>
+<div class="wcap">WHAT IS IN MEMORY</div>
+<div id="k-svg"></div>
+<div class="stats">
+<div class="stat"><b id="k-s1"></b><span>reversible, states held</span></div>
+<div class="stat"><b id="k-s2"></b><span>baseline, states held</span></div>
+<div class="stat"><b id="k-s3"></b><span>saving at this moment</span></div>
+</div>
+<div class="under" id="k-u"></div>
+</div>
+
+<script>
+(function(){
+ var L=5, S=0;
+ var E=function(i){return document.getElementById(i)};
+ function draw(){
+  L=+E('k-l').value; E('k-lv').textContent=L; if(S>=L) S=0;
+  var W=900, bw=Math.min(74,(W-160)/(L+1)), left=120, top=40, h=34;
+  var cur=L-1-S;
+  var s='<svg class="d" viewBox="0 0 '+W+' 190" xmlns="http://www.w3.org/2000/svg">';
+  s+='<text x="0" y="'+(top+22)+'" font-size="12" fill="#6FC888">reversible</text>';
+  s+='<text x="0" y="'+(top+h+42)+'" font-size="12" fill="#7FC0D4">baseline</text>';
+  for(var i=0;i<=L;i++){
+   var x=left+i*(bw+6);
+   var revHas=(i===cur+1||i===cur);
+   var recon=(i<cur);
+   s+='<rect x="'+x+'" y="'+top+'" width="'+bw+'" height="'+h+'" rx="3" fill="'+
+      (revHas?'#3F8F52':(recon?'#22262A':'#1A1E22'))+'" stroke="'+(revHas?'#6FC888':'#2E3337')+'"/>';
+   s+='<text x="'+(x+bw/2)+'" y="'+(top+22)+'" text-anchor="middle" font-size="11.5" font-family="ui-monospace" fill="'+
+      (revHas?'#fff':'#5A6570')+'">p'+i+'</text>';
+   s+='<rect x="'+x+'" y="'+(top+h+20)+'" width="'+bw+'" height="'+h+'" rx="3" fill="#3D8EA8" stroke="#2E3337"/>';
+   s+='<text x="'+(x+bw/2)+'" y="'+(top+h+42)+'" text-anchor="middle" font-size="11.5" font-family="ui-monospace" fill="#fff">p'+i+'</text>';
+  }
+  var cx=left+cur*(bw+6)+bw/2;
+  s+='<path d="M'+cx+' '+(top-16)+' l-6 -9 l12 0 z" fill="#E8C468"/>';
+  s+='<text x="'+cx+'" y="'+(top-22)+'" text-anchor="middle" font-size="11" fill="#E8C468">recomputing f(p'+cur+')</text>';
+  s+='<text x="0" y="'+(top+h+90)+'" font-size="11.5" fill="#8A9298">green = held &nbsp;&middot;&nbsp; dark = already discarded &nbsp;&middot;&nbsp; the baseline holds every state until its own layer is reached</text>';
+  s+='</svg>';
+  E('k-svg').innerHTML=s;
+  E('k-pos').textContent='layer '+cur+' of '+(L-1);
+  E('k-s1').textContent='2';
+  E('k-s2').textContent=(L+1);
+  E('k-s3').textContent=((1-2/(L+1))*100).toFixed(0)+'%';
+  E('k-u').innerHTML='At this step the reversible pass holds <b>p'+(cur+1)+'</b> and <b>p'+cur+
+    '</b>, recomputes f(p'+cur+'), and produces <b>p'+(cur-1<0?0:cur-1)+
+    '</b>. It holds <b>2</b> states no matter how deep the stack is &mdash; move the layer slider and watch the right column grow while the left does not.';
+ }
+ E('k-step').onclick=function(){S=(S+1)%L;draw()};
+ E('k-l').addEventListener('input',draw); draw();
+})();
+</script>
+
+<div class="call warn"><h4>The cost</h4>
+<p>Every block runs <b>twice</b> — once forward, once during the backward reconstruction. That is
+roughly <b>2&times; the forward FLOPs</b> instead of 1&times;.</p>
+<p>Measured on the real model: <b>1.22&times; per step</b> overall, because the backward pass already
+costs more than the forward one, so one extra forward evaluation is a smaller addition than it sounds.</p></div>
+
+<div class="carry"><b>Carry this forward:</b> one recomputation per layer reconstructs the state below
+and supplies that layer's gradients, and because layer k+1 is always processed before layer k, a
+single downward sweep is exact.</div>
+
+<div class="pager"><a href="03-inverse.html"><span>BACK</span>Why one inverts</a>
+<a class="next" href="05-code.html"><span>NEXT</span>The code</a></div>
+</main></body></html>

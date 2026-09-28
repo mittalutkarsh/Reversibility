@@ -1,0 +1,334 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The three rules — Reversibility</title>
+<style>
+/* Rack & Ledger */
+:root{
+  --ink:#1C1F22; --ink2:#212528; --panel:#1A1E22; --rail:#2E3337;
+  --cream:#EDEAE3; --cream-dim:#C4C8CC; --cream-mute:#8A9298;
+  --copper:#B87333; --copper-lt:#D19A5E; --gold:#E8C468;
+  --b1:#3D8EA8; --b2:#7B4FD6; --b3:#3F8F52; --b4:#D18B32; --hot:#C94570;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,"Segoe UI",Inter,sans-serif;
+  --cond:"SF Compact Display",-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream-dim);
+  font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:34px 26px 90px}
+h1{font-family:var(--cond);font-size:40px;line-height:1.12;color:var(--cream);
+  margin:6px 0 22px;font-weight:650;letter-spacing:-.01em}
+h2{font-family:var(--cond);font-size:26px;color:var(--cream);margin:42px 0 14px;font-weight:600}
+h3{font-family:var(--cond);font-size:19px;color:var(--cream);margin:28px 0 10px;font-weight:600}
+h4{font-family:var(--cond);font-size:16px;color:var(--cream);margin:0 0 8px;font-weight:600}
+p{margin:0 0 15px}
+a{color:var(--copper-lt)}
+strong{color:var(--cream)}
+em{color:var(--cream);font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:#22262A;padding:1px 5px;border-radius:3px;color:var(--gold)}
+.slot{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--copper);text-transform:uppercase}
+.lede{font-size:18px;color:var(--cream);line-height:1.6}
+
+/* nav */
+nav{background:#15181B;border-bottom:1px solid var(--rail);position:sticky;top:0;z-index:50}
+.navin{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow-x:auto}
+.blade{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:11px 12px;text-decoration:none;
+  color:var(--cream-mute);font-size:12.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.blade u{font-family:var(--mono);font-size:10.5px;text-decoration:none;color:var(--copper);opacity:.8}
+.blade:hover{color:var(--cream);background:#1B1F23}
+.blade.on{color:var(--cream);border-bottom-color:var(--copper);background:#1B1F23}
+
+/* equation display block */
+.eq{background:#15181B;border:1px solid var(--rail);border-left:3px solid var(--copper);
+  border-radius:3px;padding:16px 20px;margin:0 0 20px;font-family:var(--mono);
+  font-size:15px;color:var(--gold);overflow-x:auto}
+.eq .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--cream-mute)}
+.eq b{color:var(--cream)}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--rail);border-radius:4px;padding:18px 20px;margin:0 0 20px}
+.nameplate{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:10px}
+pre.w{font-family:var(--mono);font-size:13px;line-height:1.75;color:var(--cream-dim);margin:0;overflow-x:auto}
+pre.w b{color:var(--gold)}
+pre.w i{color:var(--hot);font-style:normal}
+pre.w u{color:var(--b3);text-decoration:none}
+
+/* callouts */
+.call{border-left:3px solid var(--b1);background:rgba(61,142,168,.07);padding:14px 17px;margin:0 0 20px;border-radius:3px}
+.call.warn{border-left-color:var(--hot);background:rgba(201,69,112,.07)}
+.call.good{border-left-color:var(--b3);background:rgba(63,143,82,.07)}
+.call h4{color:var(--cream)}
+.call p:last-child{margin-bottom:0}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:14px}
+caption{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--copper);text-transform:uppercase;padding-bottom:9px}
+th{text-align:left;font-family:var(--cond);font-size:12.5px;color:var(--cream-mute);
+  font-weight:600;border-bottom:1px solid var(--rail);padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #24282C;color:var(--cream-dim)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px}
+tr.total td{border-bottom:none;border-top:1px solid var(--copper);color:var(--cream)}
+tr.hi td{background:rgba(232,196,104,.06)}
+.ok{color:#6FC888}.no{color:#E07290}.mid{color:var(--gold)}
+
+/* by-hand grids */
+.vec{display:inline-flex;gap:3px;vertical-align:middle;margin:0 3px}
+.vec span{font-family:var(--mono);font-size:12.5px;min-width:52px;text-align:right;
+  padding:4px 7px;background:#22262A;border:1px solid var(--rail);border-radius:2px;color:var(--cream)}
+.vec.b1 span{border-color:var(--b1);color:#7FC0D4}
+.vec.b2 span{border-color:var(--b2);color:#A98BE8}
+.vec.b3 span{border-color:var(--b3);color:#6FC888}
+.vec.b4 span{border-color:var(--b4);color:#E8B270}
+.vec.hot span{border-color:var(--hot);color:#E88AA3}
+.byhand{background:#15181B;border:1px solid var(--rail);border-radius:4px;padding:16px 18px;margin:0 0 20px}
+.byhand .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px;font-size:13px}
+.byhand .lbl{font-family:var(--mono);font-size:12px;color:var(--cream-mute);min-width:74px}
+.byhand .op{font-family:var(--mono);color:var(--copper)}
+
+/* widgets */
+.w{background:var(--panel);border:1px solid var(--rail);border-radius:5px;padding:18px 20px;margin:0 0 22px}
+.wbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px;
+  padding-bottom:13px;border-bottom:1px solid var(--rail)}
+.wkey{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--cream-mute);text-transform:uppercase}
+.wbtns{display:inline-flex;gap:3px}
+.opt{font-family:var(--mono);font-size:12.5px;background:#22262A;color:var(--cream-dim);
+  border:1px solid var(--rail);border-radius:14px;padding:5px 12px;cursor:pointer}
+.opt:hover{background:#2A2F34;color:var(--cream)}
+.opt.on{background:var(--copper);border-color:var(--copper);color:#14181B;font-weight:600}
+.wbtns.wide .opt{border-radius:4px;padding:5px 13px}
+input[type=range]{accent-color:var(--copper);width:150px;vertical-align:middle}
+.wdiv{width:1px;height:20px;background:var(--rail)}
+.wcap{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:11px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.stat{flex:1;min-width:140px;background:#22262A;border:1px solid var(--rail);border-radius:4px;padding:11px 13px}
+.stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--gold);line-height:1.2}
+.stat span{display:block;font-size:11.5px;color:var(--cream-mute);margin-top:4px}
+.under{font-size:13px;color:var(--cream-dim);border-top:1px solid var(--rail);margin-top:12px;padding-top:11px}
+.under b{color:var(--gold);font-family:var(--mono)}
+svg.d{width:100%;height:auto;display:block}
+svg.d text{font-family:var(--sans)}
+
+/* code blocks */
+.code{background:#15181B;border:1px solid var(--rail);border-radius:4px;margin:0 0 20px;overflow:hidden}
+.code .hd{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--copper);
+  background:#1A1E22;padding:8px 14px;border-bottom:1px solid var(--rail);text-transform:uppercase}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;
+  line-height:1.7;color:var(--cream-dim);overflow-x:auto}
+.code pre .c{color:var(--cream-mute)}
+.code pre .k{color:var(--b2)}
+.code pre .s{color:var(--b3)}
+.code pre .h{color:var(--gold);background:rgba(232,196,104,.09)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px}
+@media(max-width:760px){.ba{grid-template-columns:1fr}}
+
+/* toc */
+.toc-row{display:flex;gap:14px;text-decoration:none;padding:14px 4px;border-bottom:1px solid #24282C}
+.toc-row:hover{background:#1B1F23}
+.toc-row u{font-family:var(--mono);font-size:12px;color:var(--copper);text-decoration:none;min-width:24px}
+.toc-row b{display:block;color:var(--cream);font-family:var(--cond);font-size:17px;font-weight:600}
+.toc-row p{margin:3px 0 0;font-size:13.5px;color:var(--cream-mute)}
+
+/* carry */
+.carry{background:rgba(184,115,51,.08);border-left:3px solid var(--copper);
+  padding:14px 17px;border-radius:3px;margin:26px 0 0;font-size:14.5px}
+.carry b{color:var(--copper-lt)}
+
+/* pager */
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:46px;
+  padding-top:22px;border-top:1px solid var(--rail)}
+.pager a{flex:1;text-decoration:none;color:var(--cream);background:var(--panel);
+  border:1px solid var(--rail);border-radius:4px;padding:12px 15px;font-family:var(--cond);font-size:15px}
+.pager a:hover{border-color:var(--copper)}
+.pager a span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;color:var(--copper)}
+.pager a.next{text-align:right}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--rail);border-radius:4px}
+figcaption{font-size:12.5px;color:var(--cream-mute);margin-top:8px}
+
+</style></head><body>
+<nav><div class="navin"><a class="blade" href="index.html"><u>00</u>Contents</a><a class="blade" href="01-memory.html"><u>01</u>Activation memory</a><a class="blade on" href="02-rules.html"><u>02</u>The three rules</a><a class="blade" href="03-inverse.html"><u>03</u>Why one inverts</a><a class="blade" href="04-backward.html"><u>04</u>Reversible backward</a><a class="blade" href="05-code.html"><u>05</u>The code</a><a class="blade" href="06-experiments.html"><u>06</u>The experiments</a><a class="blade" href="07-ceiling.html"><u>07</u>Batch ceiling</a><a class="blade" href="08-step-vs-token.html"><u>08</u>Step vs token</a><a class="blade" href="09-findings.html"><u>09</u>Findings</a></div></nav>
+<main><div class="slot">02 / THE MATHS</div><h1>The three rules</h1>
+<div class="eq">
+baseline &nbsp;&nbsp;x<sub>l+1</sub> = x<sub>l</sub> + f(x<sub>l</sub>)<br>
+euler &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p<sub>l+1</sub> = p<sub>l</sub> + h&middot;f(p<sub>l</sub>)<br>
+midpoint &nbsp;&nbsp;p<sub>l+1</sub> = p<sub>l&minus;1</sub> + 2h&middot;f(p<sub>l</sub>)
+<span class="note">f is the whole transformer block &mdash; attention then feed-forward, with the layer
+norms inside. h is a fixed step size; we used 0.25. Only the combination rule differs between the three.</span>
+</div>
+
+<p>All three stacks use the <strong>same block</strong>. What changes is how the block's output is
+combined with what came before.</p>
+
+<div class="call"><h4>For the worked examples below, f is deliberately simple</h4>
+<p>We use <code>f(x) = 0.5x + 1</code> so every number can be checked by eye. In the real model
+<code>f</code> is the full transformer block. The <em>combination rules</em> are exactly as they are
+in the code — only <code>f</code> is simplified.</p></div>
+
+<h2>The same input through all three</h2>
+
+<p>Start with <span class="vec"><span>4</span><span>&minus;2</span><span>0</span><span>6</span></span>
+and run three layers, with h = 0.25.</p>
+
+<h3>Baseline</h3>
+
+<div class="byhand">
+<div class="row"><span class="lbl">x<sub>0</sub></span><span class="vec "><span>4</span><span>-2</span><span>0</span><span>6</span></span></div>
+<div class="row"><span class="lbl">f(x<sub>0</sub>)</span><span class="vec b1"><span>3</span><span>0</span><span>1</span><span>4</span></span><span class="op">= 0.5&middot;x<sub>0</sub> + 1</span></div>
+<div class="row"><span class="lbl">x<sub>1</sub></span><span class="vec "><span>7</span><span>-2</span><span>1</span><span>10</span></span><span class="op">= x<sub>0</sub> + f(x<sub>0</sub>)</span></div>
+<div class="row"><span class="lbl">f(x<sub>1</sub>)</span><span class="vec b1"><span>4.5</span><span>0</span><span>1.5</span><span>6</span></span></div>
+<div class="row"><span class="lbl">x<sub>2</sub></span><span class="vec "><span>11.5</span><span>-2</span><span>2.5</span><span>16</span></span></div>
+<div class="row"><span class="lbl">f(x<sub>2</sub>)</span><span class="vec b1"><span>6.75</span><span>0</span><span>2.25</span><span>9</span></span></div>
+<div class="row"><span class="lbl">x<sub>3</sub></span><span class="vec b3"><span>18.25</span><span>-2</span><span>4.75</span><span>25</span></span></div>
+</div>
+
+<p>Each state is built from the one immediately before it. <strong>One chain, no memory of anything
+older.</strong></p>
+
+<h3>Euler</h3>
+
+<p>Identical shape, but the block's contribution is scaled by h = 0.25 before adding.</p>
+
+<div class="byhand">
+<div class="row"><span class="lbl">p<sub>0</sub></span><span class="vec "><span>4</span><span>-2</span><span>0</span><span>6</span></span></div>
+<div class="row"><span class="lbl">f(p<sub>0</sub>)</span><span class="vec b1"><span>3</span><span>0</span><span>1</span><span>4</span></span><span class="op">&times; 0.25 =</span><span class="vec b4"><span>0.75</span><span>0</span><span>0.25</span><span>1</span></span></div>
+<div class="row"><span class="lbl">p<sub>1</sub></span><span class="vec "><span>4.75</span><span>-2</span><span>0.25</span><span>7</span></span></div>
+<div class="row"><span class="lbl">f(p<sub>1</sub>)</span><span class="vec b1"><span>3.375</span><span>0</span><span>1.125</span><span>4.5</span></span><span class="op">&times; 0.25</span></div>
+<div class="row"><span class="lbl">p<sub>2</sub></span><span class="vec "><span>5.59375</span><span>-2</span><span>0.53125</span><span>8.125</span></span></div>
+<div class="row"><span class="lbl">f(p<sub>2</sub>)</span><span class="vec b1"><span>3.796875</span><span>0</span><span>1.265625</span><span>5.0625</span></span><span class="op">&times; 0.25</span></div>
+<div class="row"><span class="lbl">p<sub>3</sub></span><span class="vec b3"><span>6.542969</span><span>-2</span><span>0.847656</span><span>9.390625</span></span></div>
+</div>
+
+<p>Smaller steps, so the states move less. Still <strong>one chain</strong>: p<sub>3</sub> comes from
+p<sub>2</sub>, which comes from p<sub>1</sub>.</p>
+
+<h3>Midpoint</h3>
+
+<p>Here the rule reaches <strong>two layers back</strong>. That needs p<sub>&minus;1</sub>, which does
+not exist, so layer 0 runs as an ordinary residual block to manufacture a second state.</p>
+
+<div class="byhand">
+<div class="row"><span class="lbl">p<sub>0</sub></span><span class="vec "><span>4</span><span>-2</span><span>0</span><span>6</span></span></div>
+<div class="row"><span class="lbl">p<sub>1</sub></span><span class="vec "><span>7</span><span>-2</span><span>1</span><span>10</span></span><span class="op">bootstrap: p<sub>0</sub> + f(p<sub>0</sub>)</span></div>
+<div class="row"><span class="lbl">f(p<sub>1</sub>)</span><span class="vec b1"><span>4.5</span><span>0</span><span>1.5</span><span>6</span></span><span class="op">&times; 2h = &times; 0.5 =</span><span class="vec b4"><span>2.25</span><span>0</span><span>0.75</span><span>3</span></span></div>
+<div class="row"><span class="lbl">p<sub>2</sub></span><span class="vec "><span>6.25</span><span>-2</span><span>0.75</span><span>9</span></span><span class="op">= <b>p<sub>0</sub></b> + 0.5&middot;f(p<sub>1</sub>)</span></div>
+<div class="row"><span class="lbl">f(p<sub>2</sub>)</span><span class="vec b1"><span>4.125</span><span>0</span><span>1.375</span><span>5.5</span></span><span class="op">&times; 0.5 =</span><span class="vec b4"><span>2.0625</span><span>0</span><span>0.6875</span><span>2.75</span></span></div>
+<div class="row"><span class="lbl">p<sub>3</sub></span><span class="vec b3"><span>9.0625</span><span>-2</span><span>1.6875</span><span>12.75</span></span><span class="op">= <b>p<sub>1</sub></b> + 0.5&middot;f(p<sub>2</sub>)</span></div>
+</div>
+
+<div class="call warn"><h4>Notice which state each one adds to</h4>
+<p>p<sub>2</sub> is built from <b>p<sub>0</sub></b>, not p<sub>1</sub>. p<sub>3</sub> is built from
+<b>p<sub>1</sub></b>, not p<sub>2</sub>. The block is <em>evaluated</em> at the state in between.</p>
+<p>That one difference is the entire reason midpoint can be run backward and the other two cannot.
+The next page shows why.</p></div>
+
+<h2>Two chains, not one</h2>
+
+<svg class="d" viewBox="0 0 880 170" xmlns="http://www.w3.org/2000/svg">
+<text x="0" y="14" font-size="11" fill="#8A9298">BASELINE AND EULER &mdash; ONE CHAIN</text>
+<g font-family="ui-monospace" font-size="12">
+<circle cx="60" cy="48" r="17" fill="#3D8EA8"/><text x="60" y="53" text-anchor="middle" fill="#fff">p0</text>
+<circle cx="180" cy="48" r="17" fill="#3D8EA8"/><text x="180" y="53" text-anchor="middle" fill="#fff">p1</text>
+<circle cx="300" cy="48" r="17" fill="#3D8EA8"/><text x="300" y="53" text-anchor="middle" fill="#fff">p2</text>
+<circle cx="420" cy="48" r="17" fill="#3D8EA8"/><text x="420" y="53" text-anchor="middle" fill="#fff">p3</text>
+</g>
+<path d="M78 48 L161 48" stroke="#B87333" stroke-width="1.6" marker-end="url(#a1)"/>
+<path d="M198 48 L281 48" stroke="#B87333" stroke-width="1.6" marker-end="url(#a1)"/>
+<path d="M318 48 L401 48" stroke="#B87333" stroke-width="1.6" marker-end="url(#a1)"/>
+<defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+<path d="M0 0 L10 5 L0 10 z" fill="#B87333"/></marker></defs>
+<text x="470" y="52" font-size="12" fill="#C4C8CC">each state feeds only the next one</text>
+<text x="0" y="104" font-size="11" fill="#8A9298">MIDPOINT &mdash; TWO INTERLEAVED CHAINS</text>
+<g font-family="ui-monospace" font-size="12">
+<circle cx="60" cy="138" r="17" fill="#7B4FD6"/><text x="60" y="143" text-anchor="middle" fill="#fff">p0</text>
+<circle cx="180" cy="138" r="17" fill="#3F8F52"/><text x="180" y="143" text-anchor="middle" fill="#fff">p1</text>
+<circle cx="300" cy="138" r="17" fill="#7B4FD6"/><text x="300" y="143" text-anchor="middle" fill="#fff">p2</text>
+<circle cx="420" cy="138" r="17" fill="#3F8F52"/><text x="420" y="143" text-anchor="middle" fill="#fff">p3</text>
+</g>
+<path d="M60 121 C 130 92, 230 92, 300 121" fill="none" stroke="#7B4FD6" stroke-width="1.8" marker-end="url(#a2)"/>
+<path d="M180 121 C 250 92, 350 92, 420 121" fill="none" stroke="#3F8F52" stroke-width="1.8" marker-end="url(#a3)"/>
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+<path d="M0 0 L10 5 L0 10 z" fill="#7B4FD6"/></marker>
+<marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+<path d="M0 0 L10 5 L0 10 z" fill="#3F8F52"/></marker></defs>
+<text x="470" y="132" font-size="12" fill="#C4C8CC">even states feed even, odd feed odd &mdash;</text>
+<text x="470" y="148" font-size="12" fill="#C4C8CC">two weakly coupled streams</text>
+</svg>
+
+<div class="call"><h4>Why the blend exists</h4>
+<p>Those two streams can drift apart, which is a known behaviour of this rule. The fix is to blend
+the final pair at readout: <code>output = 0.5&middot;p[L] + 0.5&middot;p[L-1]</code>.</p>
+<p>It costs nothing, because both states are already held. The <b>0.5</b> is the blend coefficient.</p></div>
+
+<h2>Change h and watch</h2>
+
+<div class="w">
+<div class="wbar"><span class="wkey">STEP SIZE h</span>
+<input type="range" id="r-h" min="5" max="150" step="5" value="25">
+<span class="wkey" id="r-hv">0.25</span><span class="wdiv"></span>
+<span class="wkey">SHOW</span><div class="wbtns wide" id="r-v"></div></div>
+<div class="wcap" id="r-cap"></div>
+<div id="r-out"></div>
+<div class="under" id="r-u"></div>
+</div>
+
+<script>
+(function(){
+ var V='midpoint', H=0.25;
+ var E=function(i){return document.getElementById(i)};
+ function f(v){return v.map(function(x){return 0.5*x+1})}
+ function fmt(x){var r=Math.round(x*1e6)/1e6;return (''+r)}
+ function row(lbl,vals,cls,op){
+  var s='<div class="row"><span class="lbl">'+lbl+'</span><span class="vec '+(cls||'')+'">';
+  vals.forEach(function(v){s+='<span>'+fmt(v)+'</span>'});
+  return s+'</span>'+(op?'<span class="op">'+op+'</span>':'')+'</div>';
+ }
+ function btns(){var c=E('r-v');c.innerHTML='';
+  [['baseline','baseline'],['euler','euler'],['midpoint','midpoint']].forEach(function(x){
+   var b=document.createElement('button');b.className='opt'+(x[0]===V?' on':'');b.textContent=x[1];
+   b.onclick=function(){V=x[0];draw()};c.appendChild(b)})}
+ function draw(){
+  btns(); H=+E('r-h').value/100; E('r-hv').textContent=H.toFixed(2);
+  var p0=[4,-2,0,6], o='<div class="byhand">';
+  if(V==='baseline'){
+   E('r-cap').textContent='BASELINE — h IS NOT USED';
+   var x=p0; o+=row('x<sub>0</sub>',x);
+   for(var l=0;l<3;l++){var fx=f(x);o+=row('f(x<sub>'+l+'</sub>)',fx,'b1');
+    x=x.map(function(a,i){return a+fx[i]});o+=row('x<sub>'+(l+1)+'</sub>',x,l===2?'b3':'')}
+   E('r-u').innerHTML='The baseline has no step size. Moving the slider changes nothing here — that is the point of showing it.';
+  } else if(V==='euler'){
+   E('r-cap').textContent='EULER — h SCALES EACH BLOCK OUTPUT';
+   var p=p0; o+=row('p<sub>0</sub>',p);
+   for(var l=0;l<3;l++){var fp=f(p);o+=row('f(p<sub>'+l+'</sub>)',fp,'b1','&times; '+H);
+    p=p.map(function(a,i){return a+H*fp[i]});o+=row('p<sub>'+(l+1)+'</sub>',p,l===2?'b3':'')}
+   E('r-u').innerHTML='Larger h moves the states further per layer. At <b>h = 1.00</b> euler becomes the baseline exactly.';
+  } else {
+   E('r-cap').textContent='MIDPOINT — 2h SCALES, AND THE ADD REACHES TWO BACK';
+   var a=p0, fa=f(a), b=a.map(function(v,i){return v+fa[i]});
+   o+=row('p<sub>0</sub>',a); o+=row('p<sub>1</sub>',b,'','bootstrap');
+   var fb=f(b), c=a.map(function(v,i){return v+2*H*fb[i]});
+   o+=row('f(p<sub>1</sub>)',fb,'b1','&times; '+(2*H).toFixed(2));
+   o+=row('p<sub>2</sub>',c,'','= p<sub>0</sub> + 2h&middot;f(p<sub>1</sub>)');
+   var fc=f(c), d=b.map(function(v,i){return v+2*H*fc[i]});
+   o+=row('f(p<sub>2</sub>)',fc,'b1','&times; '+(2*H).toFixed(2));
+   o+=row('p<sub>3</sub>',d,'b3','= p<sub>1</sub> + 2h&middot;f(p<sub>2</sub>)');
+   var bl=d.map(function(v,i){return 0.5*v+0.5*c[i]});
+   o+=row('blend',bl,'b4','0.5&middot;p<sub>3</sub> + 0.5&middot;p<sub>2</sub>');
+   E('r-u').innerHTML='At <b>h = '+H.toFixed(2)+'</b> the two streams differ by <b>'+
+     Math.max.apply(null,d.map(function(v,i){return Math.abs(v-c[i])})).toFixed(3)+
+     '</b> at their largest element. The blend row averages them.';
+  }
+  E('r-out').innerHTML=o+'</div>';
+ }
+ E('r-h').addEventListener('input',draw); draw();
+})();
+</script>
+
+<div class="carry"><b>Carry this forward:</b> all three rules share one block; baseline and euler form
+a single chain, midpoint forms two interleaved chains by adding to the state two layers back.</div>
+
+<div class="pager"><a href="01-memory.html"><span>BACK</span>Activation memory</a>
+<a class="next" href="03-inverse.html"><span>NEXT</span>Why one inverts</a></div>
+</main></body></html>

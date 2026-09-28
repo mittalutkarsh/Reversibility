@@ -1,0 +1,375 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why one inverts and one does not — Reversibility</title>
+<style>
+/* Rack & Ledger */
+:root{
+  --ink:#1C1F22; --ink2:#212528; --panel:#1A1E22; --rail:#2E3337;
+  --cream:#EDEAE3; --cream-dim:#C4C8CC; --cream-mute:#8A9298;
+  --copper:#B87333; --copper-lt:#D19A5E; --gold:#E8C468;
+  --b1:#3D8EA8; --b2:#7B4FD6; --b3:#3F8F52; --b4:#D18B32; --hot:#C94570;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,"Segoe UI",Inter,sans-serif;
+  --cond:"SF Compact Display",-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream-dim);
+  font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:34px 26px 90px}
+h1{font-family:var(--cond);font-size:40px;line-height:1.12;color:var(--cream);
+  margin:6px 0 22px;font-weight:650;letter-spacing:-.01em}
+h2{font-family:var(--cond);font-size:26px;color:var(--cream);margin:42px 0 14px;font-weight:600}
+h3{font-family:var(--cond);font-size:19px;color:var(--cream);margin:28px 0 10px;font-weight:600}
+h4{font-family:var(--cond);font-size:16px;color:var(--cream);margin:0 0 8px;font-weight:600}
+p{margin:0 0 15px}
+a{color:var(--copper-lt)}
+strong{color:var(--cream)}
+em{color:var(--cream);font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:#22262A;padding:1px 5px;border-radius:3px;color:var(--gold)}
+.slot{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--copper);text-transform:uppercase}
+.lede{font-size:18px;color:var(--cream);line-height:1.6}
+
+/* nav */
+nav{background:#15181B;border-bottom:1px solid var(--rail);position:sticky;top:0;z-index:50}
+.navin{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow-x:auto}
+.blade{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:11px 12px;text-decoration:none;
+  color:var(--cream-mute);font-size:12.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.blade u{font-family:var(--mono);font-size:10.5px;text-decoration:none;color:var(--copper);opacity:.8}
+.blade:hover{color:var(--cream);background:#1B1F23}
+.blade.on{color:var(--cream);border-bottom-color:var(--copper);background:#1B1F23}
+
+/* equation display block */
+.eq{background:#15181B;border:1px solid var(--rail);border-left:3px solid var(--copper);
+  border-radius:3px;padding:16px 20px;margin:0 0 20px;font-family:var(--mono);
+  font-size:15px;color:var(--gold);overflow-x:auto}
+.eq .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--cream-mute)}
+.eq b{color:var(--cream)}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--rail);border-radius:4px;padding:18px 20px;margin:0 0 20px}
+.nameplate{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:10px}
+pre.w{font-family:var(--mono);font-size:13px;line-height:1.75;color:var(--cream-dim);margin:0;overflow-x:auto}
+pre.w b{color:var(--gold)}
+pre.w i{color:var(--hot);font-style:normal}
+pre.w u{color:var(--b3);text-decoration:none}
+
+/* callouts */
+.call{border-left:3px solid var(--b1);background:rgba(61,142,168,.07);padding:14px 17px;margin:0 0 20px;border-radius:3px}
+.call.warn{border-left-color:var(--hot);background:rgba(201,69,112,.07)}
+.call.good{border-left-color:var(--b3);background:rgba(63,143,82,.07)}
+.call h4{color:var(--cream)}
+.call p:last-child{margin-bottom:0}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:14px}
+caption{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--copper);text-transform:uppercase;padding-bottom:9px}
+th{text-align:left;font-family:var(--cond);font-size:12.5px;color:var(--cream-mute);
+  font-weight:600;border-bottom:1px solid var(--rail);padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #24282C;color:var(--cream-dim)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px}
+tr.total td{border-bottom:none;border-top:1px solid var(--copper);color:var(--cream)}
+tr.hi td{background:rgba(232,196,104,.06)}
+.ok{color:#6FC888}.no{color:#E07290}.mid{color:var(--gold)}
+
+/* by-hand grids */
+.vec{display:inline-flex;gap:3px;vertical-align:middle;margin:0 3px}
+.vec span{font-family:var(--mono);font-size:12.5px;min-width:52px;text-align:right;
+  padding:4px 7px;background:#22262A;border:1px solid var(--rail);border-radius:2px;color:var(--cream)}
+.vec.b1 span{border-color:var(--b1);color:#7FC0D4}
+.vec.b2 span{border-color:var(--b2);color:#A98BE8}
+.vec.b3 span{border-color:var(--b3);color:#6FC888}
+.vec.b4 span{border-color:var(--b4);color:#E8B270}
+.vec.hot span{border-color:var(--hot);color:#E88AA3}
+.byhand{background:#15181B;border:1px solid var(--rail);border-radius:4px;padding:16px 18px;margin:0 0 20px}
+.byhand .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px;font-size:13px}
+.byhand .lbl{font-family:var(--mono);font-size:12px;color:var(--cream-mute);min-width:74px}
+.byhand .op{font-family:var(--mono);color:var(--copper)}
+
+/* widgets */
+.w{background:var(--panel);border:1px solid var(--rail);border-radius:5px;padding:18px 20px;margin:0 0 22px}
+.wbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px;
+  padding-bottom:13px;border-bottom:1px solid var(--rail)}
+.wkey{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--cream-mute);text-transform:uppercase}
+.wbtns{display:inline-flex;gap:3px}
+.opt{font-family:var(--mono);font-size:12.5px;background:#22262A;color:var(--cream-dim);
+  border:1px solid var(--rail);border-radius:14px;padding:5px 12px;cursor:pointer}
+.opt:hover{background:#2A2F34;color:var(--cream)}
+.opt.on{background:var(--copper);border-color:var(--copper);color:#14181B;font-weight:600}
+.wbtns.wide .opt{border-radius:4px;padding:5px 13px}
+input[type=range]{accent-color:var(--copper);width:150px;vertical-align:middle}
+.wdiv{width:1px;height:20px;background:var(--rail)}
+.wcap{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:11px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.stat{flex:1;min-width:140px;background:#22262A;border:1px solid var(--rail);border-radius:4px;padding:11px 13px}
+.stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--gold);line-height:1.2}
+.stat span{display:block;font-size:11.5px;color:var(--cream-mute);margin-top:4px}
+.under{font-size:13px;color:var(--cream-dim);border-top:1px solid var(--rail);margin-top:12px;padding-top:11px}
+.under b{color:var(--gold);font-family:var(--mono)}
+svg.d{width:100%;height:auto;display:block}
+svg.d text{font-family:var(--sans)}
+
+/* code blocks */
+.code{background:#15181B;border:1px solid var(--rail);border-radius:4px;margin:0 0 20px;overflow:hidden}
+.code .hd{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--copper);
+  background:#1A1E22;padding:8px 14px;border-bottom:1px solid var(--rail);text-transform:uppercase}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;
+  line-height:1.7;color:var(--cream-dim);overflow-x:auto}
+.code pre .c{color:var(--cream-mute)}
+.code pre .k{color:var(--b2)}
+.code pre .s{color:var(--b3)}
+.code pre .h{color:var(--gold);background:rgba(232,196,104,.09)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px}
+@media(max-width:760px){.ba{grid-template-columns:1fr}}
+
+/* toc */
+.toc-row{display:flex;gap:14px;text-decoration:none;padding:14px 4px;border-bottom:1px solid #24282C}
+.toc-row:hover{background:#1B1F23}
+.toc-row u{font-family:var(--mono);font-size:12px;color:var(--copper);text-decoration:none;min-width:24px}
+.toc-row b{display:block;color:var(--cream);font-family:var(--cond);font-size:17px;font-weight:600}
+.toc-row p{margin:3px 0 0;font-size:13.5px;color:var(--cream-mute)}
+
+/* carry */
+.carry{background:rgba(184,115,51,.08);border-left:3px solid var(--copper);
+  padding:14px 17px;border-radius:3px;margin:26px 0 0;font-size:14.5px}
+.carry b{color:var(--copper-lt)}
+
+/* pager */
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:46px;
+  padding-top:22px;border-top:1px solid var(--rail)}
+.pager a{flex:1;text-decoration:none;color:var(--cream);background:var(--panel);
+  border:1px solid var(--rail);border-radius:4px;padding:12px 15px;font-family:var(--cond);font-size:15px}
+.pager a:hover{border-color:var(--copper)}
+.pager a span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;color:var(--copper)}
+.pager a.next{text-align:right}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--rail);border-radius:4px}
+figcaption{font-size:12.5px;color:var(--cream-mute);margin-top:8px}
+
+</style></head><body>
+<nav><div class="navin"><a class="blade" href="index.html"><u>00</u>Contents</a><a class="blade" href="01-memory.html"><u>01</u>Activation memory</a><a class="blade" href="02-rules.html"><u>02</u>The three rules</a><a class="blade on" href="03-inverse.html"><u>03</u>Why one inverts</a><a class="blade" href="04-backward.html"><u>04</u>Reversible backward</a><a class="blade" href="05-code.html"><u>05</u>The code</a><a class="blade" href="06-experiments.html"><u>06</u>The experiments</a><a class="blade" href="07-ceiling.html"><u>07</u>Batch ceiling</a><a class="blade" href="08-step-vs-token.html"><u>08</u>Step vs token</a><a class="blade" href="09-findings.html"><u>09</u>Findings</a></div></nav>
+<main><div class="slot">03 / THE MATHS</div><h1>Why one inverts and one does not</h1>
+<div class="eq">
+midpoint &nbsp;&nbsp;p<sub>l&minus;1</sub> = p<sub>l+1</sub> &minus; 2h&middot;f(<b>p<sub>l</sub></b>)
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#6FC888">f is evaluated at a state we already hold</span><br>
+euler &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p<sub>l</sub> = p<sub>l+1</sub> &minus; h&middot;f(<b>p<sub>l</sub></b>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#E07290">f is evaluated at the thing we are solving for</span>
+<span class="note">Both come from rearranging the forward rule. The difference is which state f needs.</span>
+</div>
+
+<h2>The algebra, one step at a time</h2>
+
+<h3>Midpoint inverts</h3>
+
+<div class="panel"><div class="nameplate">rearranging the forward rule</div>
+<pre class="w">forward     p[l+1] = p[l-1] + 2h&middot;f(p[l])
+
+subtract    p[l+1] - 2h&middot;f(p[l]) = p[l-1]
+
+flip        <b>p[l-1] = p[l+1] - 2h&middot;f(p[l])</b>
+
+walking down we already hold p[l+1] and p[l].
+f needs <u>p[l]</u>, which is in hand. Nothing is unknown.</pre></div>
+
+<h3>Euler does not</h3>
+
+<div class="panel"><div class="nameplate">the same rearrangement</div>
+<pre class="w">forward     p[l+1] = p[l] + h&middot;f(p[l])
+
+subtract    p[l+1] - h&middot;f(p[l]) = p[l]
+
+flip        p[l] = p[l+1] - h&middot;f(<i>p[l]</i>)
+                                    ^^^^
+            the unknown appears on BOTH sides.</pre></div>
+
+<div class="call warn"><h4>This is an implicit equation</h4>
+<p>To find <code>p[l]</code> you need <code>f(p[l])</code>, and to compute that you need
+<code>p[l]</code>. There is no closed form.</p>
+<p>You could solve it iteratively — a fixed-point or Newton method per layer. But that is an
+<b>approximation with its own tolerance</b>, not an inverse, and it would cost more forward
+evaluations than the activation memory it saves. The whole point would be lost.</p></div>
+
+<h2>Walking backward, by hand</h2>
+
+<p>Take the midpoint states from the previous page and throw away everything except the last two.</p>
+
+<div class="byhand">
+<div class="row"><span class="lbl">held</span><span class="vec b3"><span>9.0625</span><span>-2</span><span>1.6875</span><span>12.75</span></span><span class="op">p<sub>3</sub></span></div>
+<div class="row"><span class="lbl">held</span><span class="vec b3"><span>6.25</span><span>-2</span><span>0.75</span><span>9</span></span><span class="op">p<sub>2</sub></span></div>
+<div class="row" style="margin-top:14px"><span class="lbl">step 1</span><span class="op">recompute f(p<sub>2</sub>) =</span><span class="vec b1"><span>4.125</span><span>0</span><span>1.375</span><span>5.5</span></span></div>
+<div class="row"><span class="lbl"></span><span class="op">&times; 2h = &times; 0.5 =</span><span class="vec b4"><span>2.0625</span><span>0</span><span>0.6875</span><span>2.75</span></span></div>
+<div class="row"><span class="lbl">p<sub>1</sub> =</span><span class="vec b3"><span>9.0625</span><span>-2</span><span>1.6875</span><span>12.75</span></span><span class="op">&minus;</span><span class="vec b4"><span>2.0625</span><span>0</span><span>0.6875</span><span>2.75</span></span></div>
+<div class="row"><span class="lbl">&rarr;</span><span class="vec b2"><span>7</span><span>-2</span><span>1</span><span>10</span></span><span class="op" style="color:#6FC888">exactly p<sub>1</sub> from the forward pass</span></div>
+<div class="row" style="margin-top:14px"><span class="lbl">step 2</span><span class="op">recompute f(p<sub>1</sub>) =</span><span class="vec b1"><span>4.5</span><span>0</span><span>1.5</span><span>6</span></span></div>
+<div class="row"><span class="lbl"></span><span class="op">&times; 0.5 =</span><span class="vec b4"><span>2.25</span><span>0</span><span>0.75</span><span>3</span></span></div>
+<div class="row"><span class="lbl">p<sub>0</sub> =</span><span class="vec b3"><span>6.25</span><span>-2</span><span>0.75</span><span>9</span></span><span class="op">&minus;</span><span class="vec b4"><span>2.25</span><span>0</span><span>0.75</span><span>3</span></span></div>
+<div class="row"><span class="lbl">&rarr;</span><span class="vec b2"><span>4</span><span>-2</span><span>0</span><span>6</span></span><span class="op" style="color:#6FC888">exactly p<sub>0</sub></span></div>
+</div>
+
+<p><strong>Both states recovered exactly, from two stored vectors and two recomputations of f.</strong>
+Nothing in between was kept.</p>
+
+<h3>The same attempt for euler</h3>
+
+<p>Its exact inverse is unavailable, so the only option is the <em>naive explicit</em> version:
+evaluate f at the state you have rather than the one you want.</p>
+
+<div class="byhand">
+<div class="row"><span class="lbl">held</span><span class="vec b3"><span>6.542969</span><span>-2</span><span>0.847656</span><span>9.390625</span></span><span class="op">p<sub>3</sub></span></div>
+<div class="row"><span class="lbl">want</span><span class="vec b2"><span>5.59375</span><span>-2</span><span>0.53125</span><span>8.125</span></span><span class="op">true p<sub>2</sub>, for comparison</span></div>
+<div class="row" style="margin-top:14px"><span class="lbl">naive</span><span class="op">p&#770;<sub>2</sub> = p<sub>3</sub> &minus; h&middot;f(<b>p<sub>3</sub></b>)</span><span class="op" style="color:#E07290">&larr; wrong argument</span></div>
+<div class="row"><span class="lbl">&rarr;</span><span class="vec hot"><span>5.475098</span><span>-2</span><span>0.491699</span><span>7.966797</span></span></div>
+<div class="row"><span class="lbl">error</span><span class="vec hot"><span>0.118652</span><span>0</span><span>0.039551</span><span>0.158203</span></span><span class="op">max <b style="color:#E07290">0.158</b> after one step</span></div>
+</div>
+
+<p>And that error compounds. Over five real layers it reached <strong>0.653</strong> — a
+reconstruction wrong by 65% of the signal.</p>
+
+<h2>What a ULP is, and why it matters here</h2>
+
+<div class="eq">
+fp32 spacing for a number in [1, 2)  =  2<sup>&minus;23</sup>  =  <b>1.19209e&minus;07</b>
+<span class="note">ULP means "unit in the last place" &mdash; the gap between one representable float and
+the next. It is the smallest error any calculation can have.</span>
+</div>
+
+<p>Floating point cannot store every number. Between 1 and 2, fp32 stores values spaced
+<code>2⁻²³</code> apart. An answer off by one ULP is <strong>as correct as fp32 allows</strong>.</p>
+
+<p>Now the measured midpoint reconstruction, on real data:</p>
+
+<table><caption>Midpoint, fp32, chained — each recovered state built from the previous recovered one</caption>
+<thead><tr><th>Recovers</th><th class="n">Max abs error</th><th class="n">In ULP</th><th class="n">Growth</th></tr></thead>
+<tbody>
+<tr><td>p[3]</td><td class="n">1.192e&minus;07</td><td class="n mid">1.00</td><td class="n">&mdash;</td></tr>
+<tr><td>p[2]</td><td class="n">5.960e&minus;07</td><td class="n">5.00</td><td class="n">5.00&times;</td></tr>
+<tr><td>p[1]</td><td class="n">7.972e&minus;07</td><td class="n">6.69</td><td class="n">1.34&times;</td></tr>
+<tr class="total"><td>p[0]</td><td class="n">9.574e&minus;07</td><td class="n">8.03</td><td class="n">1.20&times;</td></tr>
+</tbody></table>
+
+<p><strong>The first recovered state is off by exactly one ULP.</strong> 1.192e&minus;07 is precisely
+<code>2⁻²³</code>, and the state's largest value is 1.32 — which sits in [1, 2) where that spacing
+applies. It is a single rounding.</p>
+
+<p>Four steps later it is 8 ULP, and the growth is <em>decelerating</em>: 5.00&times;, then 1.34&times;,
+then 1.20&times;. That is roundoff accumulating and flattening, not error being amplified.</p>
+
+<h2>The test that separates the two failure modes</h2>
+
+<p>Run the same check in bf16, which has an 8-bit mantissa instead of fp32's 23. Machine epsilon
+changes by a factor of <code>2¹⁵ = 32,768</code>.</p>
+
+<table><caption>Same check, two precisions</caption>
+<thead><tr><th>Variant</th><th class="n">fp32</th><th class="n">bf16</th><th class="n">Ratio</th><th>What that means</th></tr></thead>
+<tbody>
+<tr><td>midpoint</td><td class="n">9.574e&minus;07</td><td class="n">1.263e&minus;02</td><td class="n mid">13,192&times;</td>
+<td class="ok">error scales with precision &rarr; <b>rounding</b></td></tr>
+<tr class="total"><td>euler</td><td class="n">6.531e&minus;01</td><td class="n">6.554e&minus;01</td><td class="n no">1.0035&times;</td>
+<td class="no">error ignores precision &rarr; <b>the map is wrong</b></td></tr>
+</tbody></table>
+
+<div class="call good"><h4>This is the cleanest evidence in the whole experiment</h4>
+<p>Midpoint's error moves by 13,192&times; when the float grid gets 32,768&times; coarser — same order,
+so it <em>is</em> the grid. The rule is exact; only the arithmetic is approximate.</p>
+<p>Euler's error is <b>identical to three significant figures</b> across that same change. Precision
+is irrelevant because the formula itself is wrong. No amount of extra bits would help.</p></div>
+
+<h2>Compare them yourself</h2>
+
+<div class="w">
+<div class="wbar"><span class="wkey">RULE</span><div class="wbtns wide" id="i-v"></div>
+<span class="wdiv"></span><span class="wkey">LAYERS</span>
+<input type="range" id="i-l" min="2" max="12" step="1" value="5"><span class="wkey" id="i-lv">5</span>
+<span class="wdiv"></span><span class="wkey">PRECISION</span><div class="wbtns" id="i-p"></div></div>
+<div class="wcap" id="i-cap"></div>
+<div id="i-svg"></div>
+<div class="stats">
+<div class="stat"><b id="i-s1"></b><span>final reconstruction error</span></div>
+<div class="stat"><b id="i-s2"></b><span>per-layer growth</span></div>
+<div class="stat"><b id="i-s3"></b><span>verdict</span></div>
+</div>
+<div class="under" id="i-u"></div>
+</div>
+
+<script>
+(function(){
+ var V='midpoint', L=5, PR='fp32';
+ var E=function(i){return document.getElementById(i)};
+ var EPS={fp32:1.19209e-7, bf16:3.90625e-3};
+ function btns(){
+  var a=E('i-v');a.innerHTML='';
+  [['midpoint','midpoint'],['euler','euler']].forEach(function(x){
+   var b=document.createElement('button');b.className='opt'+(x[0]===V?' on':'');b.textContent=x[1];
+   b.onclick=function(){V=x[0];draw()};a.appendChild(b)});
+  var c=E('i-p');c.innerHTML='';
+  ['fp32','bf16'].forEach(function(x){
+   var b=document.createElement('button');b.className='opt'+(x===PR?' on':'');b.textContent=x;
+   b.onclick=function(){PR=x;draw()};c.appendChild(b)});
+ }
+ function draw(){
+  btns(); L=+E('i-l').value; E('i-lv').textContent=L;
+  var eps=EPS[PR], errs=[], e;
+  if(V==='midpoint'){ e=eps; for(var i=0;i<L;i++){ errs.push(e); e=e*(i===0?5:1+2/(i+2)); } }
+  else { e=0.143; for(var i=0;i<L;i++){ errs.push(e); e=e*1.4; } }
+  var W=900,left=54,tw=W-left-20,top=24,H=120;
+  function y(v){var lo=Math.log10(1e-8),hi=Math.log10(2);
+   return top+H-((Math.log10(Math.max(v,1e-8))-lo)/(hi-lo))*H;}
+  var s='<svg class="d" viewBox="0 0 '+W+' 190" xmlns="http://www.w3.org/2000/svg">';
+  [-8,-6,-4,-2,0].forEach(function(p){
+   var yy=y(Math.pow(10,p));
+   s+='<line x1="'+left+'" y1="'+yy+'" x2="'+(left+tw)+'" y2="'+yy+'" stroke="#24282C"/>';
+   s+='<text x="'+(left-8)+'" y="'+(yy+4)+'" font-size="10" fill="#8A9298" text-anchor="end">1e'+p+'</text>';});
+  var fy=y(8*eps);
+  s+='<line x1="'+left+'" y1="'+fy+'" x2="'+(left+tw)+'" y2="'+fy+'" stroke="#E8C468" stroke-dasharray="4 3"/>';
+  s+='<text x="'+(left+tw)+'" y="'+(fy-6)+'" font-size="10.5" fill="#E8C468" text-anchor="end">8 ULP floor for '+PR+'</text>';
+  var col=V==='midpoint'?'#3F8F52':'#C94570', pts='', dots='';
+  errs.forEach(function(v,i){var xx=left+(i/(L-1))*tw;pts+=xx+','+y(v)+' ';
+   dots+='<circle cx="'+xx+'" cy="'+y(v)+'" r="4" fill="'+col+'"/>';});
+  s+='<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="2"/>'+dots;
+  for(var i=0;i<L;i++){var xx=left+(i/(L-1))*tw;
+   s+='<text x="'+xx+'" y="'+(top+H+18)+'" font-size="10" fill="#8A9298" text-anchor="middle">'+i+'</text>';}
+  s+='<text x="'+(left+tw/2)+'" y="'+(top+H+38)+'" font-size="11" fill="#8A9298" text-anchor="middle">walk step, going down the stack</text>';
+  s+='</svg>';
+  E('i-svg').innerHTML=s;
+  E('i-cap').textContent=V.toUpperCase()+' IN '+PR.toUpperCase()+', LOG AXIS';
+  var fin=errs[errs.length-1], g=Math.pow(fin/errs[0],1/(L-1));
+  E('i-s1').textContent=fin.toExponential(3);
+  E('i-s2').textContent=g.toFixed(2)+'x';
+  var pass=V==='midpoint'&&PR==='fp32'&&fin<1e-4;
+  E('i-s3').textContent=pass?'PASS':'FAIL'; E('i-s3').className=pass?'ok':'no';
+  E('i-u').innerHTML = V==='midpoint'
+   ? 'Midpoint sits near the <b>8-ULP floor</b> for its precision. Switch to bf16 and the whole curve lifts by about <b>32,768&times;</b> &mdash; the error follows the float grid, because it <em>is</em> the float grid.'
+   : 'Euler starts at <b>0.143</b> and multiplies by about <b>1.4&times;</b> per layer regardless of precision. Switch to bf16 and almost nothing moves &mdash; the error is in the formula, not the arithmetic.';
+ }
+ E('i-l').addEventListener('input',draw); draw();
+})();
+</script>
+
+<h2>The gate that nearly let euler through</h2>
+
+<p>The original check flagged any single step growing more than 10&times;. Euler grows a steady
+1.4&times; per layer, so it was waved through as "not growing" — only the magnitude check caught it.</p>
+
+<div class="panel"><div class="nameplate">the tightened rule</div>
+<pre class="w">clamp errors to an <b>8-ULP floor</b>, dtype-aware
+  fp32: 8 &times; 2^-23   bf16: 8 &times; 2^-8
+
+flag <b>3 or more consecutive increases</b> whose total exceeds <b>3&times;</b>
+
+  euler    fp32   4 increases, 4.57&times;  &rarr; <i>GROWING</i>
+  euler    bf16   4 increases, 4.60&times;  &rarr; <i>GROWING</i>
+  midpoint fp32   1 increase,  1.00&times;  &rarr; <u>not growing</u>
+  midpoint bf16   none above floor      &rarr; <u>not growing</u></pre></div>
+
+<p>Below the floor, "growth" is the float grid rather than the rule — which is why the floor has to
+be there.</p>
+
+<div class="carry"><b>Carry this forward:</b> midpoint's inverse evaluates f at a state already held,
+euler's evaluates it at the unknown; the bf16 test proves one error is rounding and the other is a
+wrong formula.</div>
+
+<div class="pager"><a href="02-rules.html"><span>BACK</span>The three rules</a>
+<a class="next" href="04-backward.html"><span>NEXT</span>Reversible backward</a></div>
+</main></body></html>

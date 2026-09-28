@@ -1,0 +1,303 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The experiments — Reversibility</title>
+<style>
+/* Rack & Ledger */
+:root{
+  --ink:#1C1F22; --ink2:#212528; --panel:#1A1E22; --rail:#2E3337;
+  --cream:#EDEAE3; --cream-dim:#C4C8CC; --cream-mute:#8A9298;
+  --copper:#B87333; --copper-lt:#D19A5E; --gold:#E8C468;
+  --b1:#3D8EA8; --b2:#7B4FD6; --b3:#3F8F52; --b4:#D18B32; --hot:#C94570;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,"Segoe UI",Inter,sans-serif;
+  --cond:"SF Compact Display",-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream-dim);
+  font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:34px 26px 90px}
+h1{font-family:var(--cond);font-size:40px;line-height:1.12;color:var(--cream);
+  margin:6px 0 22px;font-weight:650;letter-spacing:-.01em}
+h2{font-family:var(--cond);font-size:26px;color:var(--cream);margin:42px 0 14px;font-weight:600}
+h3{font-family:var(--cond);font-size:19px;color:var(--cream);margin:28px 0 10px;font-weight:600}
+h4{font-family:var(--cond);font-size:16px;color:var(--cream);margin:0 0 8px;font-weight:600}
+p{margin:0 0 15px}
+a{color:var(--copper-lt)}
+strong{color:var(--cream)}
+em{color:var(--cream);font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:#22262A;padding:1px 5px;border-radius:3px;color:var(--gold)}
+.slot{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--copper);text-transform:uppercase}
+.lede{font-size:18px;color:var(--cream);line-height:1.6}
+
+/* nav */
+nav{background:#15181B;border-bottom:1px solid var(--rail);position:sticky;top:0;z-index:50}
+.navin{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow-x:auto}
+.blade{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:11px 12px;text-decoration:none;
+  color:var(--cream-mute);font-size:12.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.blade u{font-family:var(--mono);font-size:10.5px;text-decoration:none;color:var(--copper);opacity:.8}
+.blade:hover{color:var(--cream);background:#1B1F23}
+.blade.on{color:var(--cream);border-bottom-color:var(--copper);background:#1B1F23}
+
+/* equation display block */
+.eq{background:#15181B;border:1px solid var(--rail);border-left:3px solid var(--copper);
+  border-radius:3px;padding:16px 20px;margin:0 0 20px;font-family:var(--mono);
+  font-size:15px;color:var(--gold);overflow-x:auto}
+.eq .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--cream-mute)}
+.eq b{color:var(--cream)}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--rail);border-radius:4px;padding:18px 20px;margin:0 0 20px}
+.nameplate{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:10px}
+pre.w{font-family:var(--mono);font-size:13px;line-height:1.75;color:var(--cream-dim);margin:0;overflow-x:auto}
+pre.w b{color:var(--gold)}
+pre.w i{color:var(--hot);font-style:normal}
+pre.w u{color:var(--b3);text-decoration:none}
+
+/* callouts */
+.call{border-left:3px solid var(--b1);background:rgba(61,142,168,.07);padding:14px 17px;margin:0 0 20px;border-radius:3px}
+.call.warn{border-left-color:var(--hot);background:rgba(201,69,112,.07)}
+.call.good{border-left-color:var(--b3);background:rgba(63,143,82,.07)}
+.call h4{color:var(--cream)}
+.call p:last-child{margin-bottom:0}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:14px}
+caption{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--copper);text-transform:uppercase;padding-bottom:9px}
+th{text-align:left;font-family:var(--cond);font-size:12.5px;color:var(--cream-mute);
+  font-weight:600;border-bottom:1px solid var(--rail);padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #24282C;color:var(--cream-dim)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px}
+tr.total td{border-bottom:none;border-top:1px solid var(--copper);color:var(--cream)}
+tr.hi td{background:rgba(232,196,104,.06)}
+.ok{color:#6FC888}.no{color:#E07290}.mid{color:var(--gold)}
+
+/* by-hand grids */
+.vec{display:inline-flex;gap:3px;vertical-align:middle;margin:0 3px}
+.vec span{font-family:var(--mono);font-size:12.5px;min-width:52px;text-align:right;
+  padding:4px 7px;background:#22262A;border:1px solid var(--rail);border-radius:2px;color:var(--cream)}
+.vec.b1 span{border-color:var(--b1);color:#7FC0D4}
+.vec.b2 span{border-color:var(--b2);color:#A98BE8}
+.vec.b3 span{border-color:var(--b3);color:#6FC888}
+.vec.b4 span{border-color:var(--b4);color:#E8B270}
+.vec.hot span{border-color:var(--hot);color:#E88AA3}
+.byhand{background:#15181B;border:1px solid var(--rail);border-radius:4px;padding:16px 18px;margin:0 0 20px}
+.byhand .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px;font-size:13px}
+.byhand .lbl{font-family:var(--mono);font-size:12px;color:var(--cream-mute);min-width:74px}
+.byhand .op{font-family:var(--mono);color:var(--copper)}
+
+/* widgets */
+.w{background:var(--panel);border:1px solid var(--rail);border-radius:5px;padding:18px 20px;margin:0 0 22px}
+.wbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px;
+  padding-bottom:13px;border-bottom:1px solid var(--rail)}
+.wkey{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--cream-mute);text-transform:uppercase}
+.wbtns{display:inline-flex;gap:3px}
+.opt{font-family:var(--mono);font-size:12.5px;background:#22262A;color:var(--cream-dim);
+  border:1px solid var(--rail);border-radius:14px;padding:5px 12px;cursor:pointer}
+.opt:hover{background:#2A2F34;color:var(--cream)}
+.opt.on{background:var(--copper);border-color:var(--copper);color:#14181B;font-weight:600}
+.wbtns.wide .opt{border-radius:4px;padding:5px 13px}
+input[type=range]{accent-color:var(--copper);width:150px;vertical-align:middle}
+.wdiv{width:1px;height:20px;background:var(--rail)}
+.wcap{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:11px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.stat{flex:1;min-width:140px;background:#22262A;border:1px solid var(--rail);border-radius:4px;padding:11px 13px}
+.stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--gold);line-height:1.2}
+.stat span{display:block;font-size:11.5px;color:var(--cream-mute);margin-top:4px}
+.under{font-size:13px;color:var(--cream-dim);border-top:1px solid var(--rail);margin-top:12px;padding-top:11px}
+.under b{color:var(--gold);font-family:var(--mono)}
+svg.d{width:100%;height:auto;display:block}
+svg.d text{font-family:var(--sans)}
+
+/* code blocks */
+.code{background:#15181B;border:1px solid var(--rail);border-radius:4px;margin:0 0 20px;overflow:hidden}
+.code .hd{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--copper);
+  background:#1A1E22;padding:8px 14px;border-bottom:1px solid var(--rail);text-transform:uppercase}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;
+  line-height:1.7;color:var(--cream-dim);overflow-x:auto}
+.code pre .c{color:var(--cream-mute)}
+.code pre .k{color:var(--b2)}
+.code pre .s{color:var(--b3)}
+.code pre .h{color:var(--gold);background:rgba(232,196,104,.09)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px}
+@media(max-width:760px){.ba{grid-template-columns:1fr}}
+
+/* toc */
+.toc-row{display:flex;gap:14px;text-decoration:none;padding:14px 4px;border-bottom:1px solid #24282C}
+.toc-row:hover{background:#1B1F23}
+.toc-row u{font-family:var(--mono);font-size:12px;color:var(--copper);text-decoration:none;min-width:24px}
+.toc-row b{display:block;color:var(--cream);font-family:var(--cond);font-size:17px;font-weight:600}
+.toc-row p{margin:3px 0 0;font-size:13.5px;color:var(--cream-mute)}
+
+/* carry */
+.carry{background:rgba(184,115,51,.08);border-left:3px solid var(--copper);
+  padding:14px 17px;border-radius:3px;margin:26px 0 0;font-size:14.5px}
+.carry b{color:var(--copper-lt)}
+
+/* pager */
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:46px;
+  padding-top:22px;border-top:1px solid var(--rail)}
+.pager a{flex:1;text-decoration:none;color:var(--cream);background:var(--panel);
+  border:1px solid var(--rail);border-radius:4px;padding:12px 15px;font-family:var(--cond);font-size:15px}
+.pager a:hover{border-color:var(--copper)}
+.pager a span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;color:var(--copper)}
+.pager a.next{text-align:right}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--rail);border-radius:4px}
+figcaption{font-size:12.5px;color:var(--cream-mute);margin-top:8px}
+
+</style></head><body>
+<nav><div class="navin"><a class="blade" href="index.html"><u>00</u>Contents</a><a class="blade" href="01-memory.html"><u>01</u>Activation memory</a><a class="blade" href="02-rules.html"><u>02</u>The three rules</a><a class="blade" href="03-inverse.html"><u>03</u>Why one inverts</a><a class="blade" href="04-backward.html"><u>04</u>Reversible backward</a><a class="blade" href="05-code.html"><u>05</u>The code</a><a class="blade on" href="06-experiments.html"><u>06</u>The experiments</a><a class="blade" href="07-ceiling.html"><u>07</u>Batch ceiling</a><a class="blade" href="08-step-vs-token.html"><u>08</u>Step vs token</a><a class="blade" href="09-findings.html"><u>09</u>Findings</a></div></nav>
+<main><div class="slot">06 / THE EVIDENCE</div><h1>The experiments</h1>
+<div class="eq">
+one variable at a time
+<span class="note">Runs 01 to 03 differ only in the combination rule. Run 04 differs from 03 only in
+batch size. Same seed, same data order, same optimiser, same schedule throughout.</span>
+</div>
+
+<h2>Two gates had to pass first</h2>
+
+<p>Neither gate involves training. Both are cheap, and both would have invalidated everything
+downstream if skipped.</p>
+
+<table><caption>What each gate proved</caption>
+<thead><tr><th>Gate</th><th>Question</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>reversibility</td><td>does the rule actually invert?</td>
+<td>midpoint <span class="ok">9.574e&minus;07 PASS</span> &middot; euler <span class="no">6.531e&minus;01 FAIL</span></td></tr>
+<tr class="total"><td>gradients</td><td>does the reversible backward give the same gradients?</td>
+<td><span class="ok">4.090e&minus;06 relative, 0 of 63 tensors over tolerance</span></td></tr>
+</tbody></table>
+
+<div class="call"><h4>They answer different questions</h4>
+<p>Exact reconstruction does <b>not</b> guarantee correct gradients — that is a separate claim needing
+separate evidence. A rule could invert perfectly and still have a backward pass that accumulates
+gradient into the wrong state.</p></div>
+
+<h2>The setup</h2>
+
+<table><caption>Held fixed across all four runs</caption>
+<thead><tr><th></th><th></th></tr></thead>
+<tbody>
+<tr><td>model</td><td>vocab 8,192 &middot; d_model 512 &middot; 5 layers &middot; 8 heads &middot; context 1024 &middot; RoPE &middot; tied embeddings</td></tr>
+<tr><td>parameters</td><td>19,957,248 &mdash; identical across variants</td></tr>
+<tr><td>data</td><td>TinyStories, first 250 MB, byte-level BPE at vocab 8,192</td></tr>
+<tr><td>tokens</td><td>50,003,968 per run (6,104 &times; 8,192 &mdash; 0.008% over 50M, identically)</td></tr>
+<tr><td>optimiser</td><td>AdamW &beta; (0.9, 0.95), wd 0.1, lr 3e-4 cosine to 3e-5, 100 warmup, clip 1.0</td></tr>
+<tr><td>precision</td><td>fp32</td></tr>
+<tr class="total"><td>dropout</td><td><b>0, everywhere including the baseline</b></td></tr>
+</tbody></table>
+
+<div class="call warn"><h4>Dropout must be zero, and in every run</h4>
+<p>Reversibility recomputes a block to reconstruct its activations. A random dropout mask would be
+<b>resampled</b> on recomputation, so the reconstruction would silently differ from what the forward
+pass used.</p>
+<p>Setting it to zero only in the reversible runs would have made them incomparable. So no
+<code>nn.Dropout</code> module is created anywhere &mdash; the forward pass draws no random numbers
+at all.</p></div>
+
+<h2>Proving the data order was actually held</h2>
+
+<p>Same seed is not enough. A different data-loader path can produce different batches from the same
+seed, and the loss curve will not reveal it.</p>
+
+<div class="panel"><div class="nameplate">first 10 token ids of the first batch, recorded in every config.json</div>
+<pre class="w">01_baseline_bs8       <b>[263, 881, 14, 0, 431, 446, 259, 397, 12, 402]</b>
+02_euler_bs8          <b>[263, 881, 14, 0, 431, 446, 259, 397, 12, 402]</b>
+03_midpoint_rev_bs8   <b>[263, 881, 14, 0, 431, 446, 259, 397, 12, 402]</b>
+04_midpoint_rev_bs32  <b>[263, 881, 14, 0, 431, 446, 259, 397, 12, 402]</b>
+
+the <u>0</u> in position four is the end-of-text token &mdash; a story boundary</pre></div>
+
+<h2>The validation curves</h2>
+
+<p>Every run validated every 200 steps on the <strong>same fixed 163,840 held-out tokens</strong>.</p>
+
+<table><caption>Validation loss, all three batch-8 runs</caption>
+<thead><tr><th class="n">Step</th><th class="n">baseline</th><th class="n">euler</th><th class="n">midpoint_rev</th></tr></thead>
+<tbody>
+<tr><td class="n">199</td><td class="n">3.6321</td><td class="n">3.6242</td><td class="n">3.5980</td></tr>
+<tr><td class="n">1,399</td><td class="n">2.3238</td><td class="n">2.2842</td><td class="n">2.3003</td></tr>
+<tr><td class="n">2,599</td><td class="n">2.0291</td><td class="n">1.9978</td><td class="n">2.0277</td></tr>
+<tr><td class="n">3,799</td><td class="n">1.8820</td><td class="n">1.8559</td><td class="n">1.8794</td></tr>
+<tr><td class="n">4,999</td><td class="n">1.7939</td><td class="n">1.7747</td><td class="n">1.7943</td></tr>
+<tr class="total"><td class="n">6,103</td><td class="n">1.7599</td><td class="n mid">1.7415</td><td class="n">1.7598</td></tr>
+</tbody></table>
+
+<figure><img src="figures/fig1_val_loss.png" alt="Validation loss against tokens seen">
+<figcaption>Runs 01 and 03 coincide so closely that equal line widths hid one entirely. Baseline is
+drawn thick with midpoint_rev thin on top &mdash; green inside blue means they agree. Run 04's
+intermediate points indicate curve shape; only its endpoint at 2.0870 is a measured validation
+figure.</figcaption></figure>
+
+<h2>Result 1 — reversibility is free in loss terms</h2>
+
+<div class="eq">
+1.768222 &nbsp;vs&nbsp; 1.768609 &nbsp;&rarr;&nbsp; <b>0.000387 apart, 0.022%</b>
+<span class="note">midpoint_rev against baseline, after 6,104 steps on identical data.</span>
+</div>
+
+<p>This is what the gradient gate predicted from a <em>single batch</em>, now confirmed over a full
+run. The reversible backward reconstructs activations instead of storing them and the optimisation
+outcome is indistinguishable.</p>
+
+<p>The cost is <strong>1.22&times; per step</strong>, and the saving is <strong>51.7% of peak
+memory</strong> at batch 8.</p>
+
+<h2>Result 2 — euler trains best and cannot be reversed</h2>
+
+<p>Euler finished <strong>0.0194 below baseline</strong> — the best of the three — and led at every
+single validation point.</p>
+
+<div class="call"><h4>This does not contradict the gate</h4>
+<p>Gate 1 showed euler's <b>inverse</b> is wrong. Nothing about that prevents the forward map from
+being a good integrator.</p>
+<p><b>Reconstruction quality and optimisation quality are independent properties</b>, and these runs
+separate them cleanly &mdash; which is exactly why euler was run to completion rather than dropped
+after failing the gate.</p>
+<p>It remains unusable for a reversible backward. Building one on a 65%-wrong inverse would produce
+silently incorrect gradients.</p></div>
+
+<h2>Why wall-clock time was thrown away</h2>
+
+<p>Median step times across the three runs sit within 27% of each other. Wall clock ranged from
+<strong>1.47 to 5.70 hours</strong>.</p>
+
+<table><caption>The same runs, two ways of measuring</caption>
+<thead><tr><th>Run</th><th class="n">Median s/step</th><th class="n">Wall hours</th><th class="n">mean / median</th></tr></thead>
+<tbody>
+<tr><td>01 baseline</td><td class="n">0.6392</td><td class="n">5.70</td><td class="n no">5.26</td></tr>
+<tr><td>02 euler</td><td class="n">0.6514</td><td class="n">3.33</td><td class="n no">3.02</td></tr>
+<tr class="total"><td>03 midpoint_rev</td><td class="n">0.8138</td><td class="n">1.47</td><td class="n ok">1.07</td></tr>
+</tbody></table>
+
+<p>A <code>mean/median</code> near 1.0 means most steps took about the same time. At 5.26 it means a
+long tail of steps were catastrophically slow — the machine swapping, not the variant.</p>
+
+<div class="call warn"><h4>Measured live</h4>
+<p>Closing Chrome mid-run took the rate from <b>10.36 s/step to 0.72 s/step</b> &mdash; a
+<b>14&times;</b> speedup, within one validation interval, with no restart.</p>
+<p>All throughput figures in this site therefore come from a separate 200-step measurement on a quiet
+machine, where every <code>mean/median</code> was ~1.00.</p></div>
+
+<table><caption>Clean throughput, batch 8, 200 steps, first 50 discarded</caption>
+<thead><tr><th>Variant</th><th class="n">median s</th><th class="n">p99 s</th><th class="n">mean/med</th><th class="n">tokens/s</th><th class="n">peak GB</th></tr></thead>
+<tbody>
+<tr><td>baseline</td><td class="n">0.6556</td><td class="n">0.8326</td><td class="n">1.020</td><td class="n">12,496</td><td class="n">5.32</td></tr>
+<tr><td>euler</td><td class="n">0.6437</td><td class="n">0.6944</td><td class="n">1.005</td><td class="n">12,726</td><td class="n">5.32</td></tr>
+<tr class="total"><td>midpoint_rev</td><td class="n">0.8007</td><td class="n">0.8102</td><td class="n">1.001</td><td class="n">10,231</td><td class="n mid">2.57</td></tr>
+</tbody></table>
+
+<p><strong>midpoint_rev has the tightest tail of the three</strong> — its p99 sits 1.2% above its
+median, against baseline's 27%. The variant touching least memory is the most predictable, which is
+the same mechanism that wrecked the wall-clock numbers.</p>
+
+<div class="carry"><b>Carry this forward:</b> two gates before any training, one variable changed at a
+time, and median step time rather than wall clock &mdash; reversibility cost 1.22&times; per step and
+0.022% of loss.</div>
+
+<div class="pager"><a href="05-code.html"><span>BACK</span>The code</a>
+<a class="next" href="07-ceiling.html"><span>NEXT</span>Batch ceiling</a></div>
+</main></body></html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The code — Reversibility</title>
+<style>
+/* Rack & Ledger */
+:root{
+  --ink:#1C1F22; --ink2:#212528; --panel:#1A1E22; --rail:#2E3337;
+  --cream:#EDEAE3; --cream-dim:#C4C8CC; --cream-mute:#8A9298;
+  --copper:#B87333; --copper-lt:#D19A5E; --gold:#E8C468;
+  --b1:#3D8EA8; --b2:#7B4FD6; --b3:#3F8F52; --b4:#D18B32; --hot:#C94570;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,"Segoe UI",Inter,sans-serif;
+  --cond:"SF Compact Display",-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream-dim);
+  font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:34px 26px 90px}
+h1{font-family:var(--cond);font-size:40px;line-height:1.12;color:var(--cream);
+  margin:6px 0 22px;font-weight:650;letter-spacing:-.01em}
+h2{font-family:var(--cond);font-size:26px;color:var(--cream);margin:42px 0 14px;font-weight:600}
+h3{font-family:var(--cond);font-size:19px;color:var(--cream);margin:28px 0 10px;font-weight:600}
+h4{font-family:var(--cond);font-size:16px;color:var(--cream);margin:0 0 8px;font-weight:600}
+p{margin:0 0 15px}
+a{color:var(--copper-lt)}
+strong{color:var(--cream)}
+em{color:var(--cream);font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:#22262A;padding:1px 5px;border-radius:3px;color:var(--gold)}
+.slot{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--copper);text-transform:uppercase}
+.lede{font-size:18px;color:var(--cream);line-height:1.6}
+
+/* nav */
+nav{background:#15181B;border-bottom:1px solid var(--rail);position:sticky;top:0;z-index:50}
+.navin{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow-x:auto}
+.blade{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:11px 12px;text-decoration:none;
+  color:var(--cream-mute);font-size:12.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.blade u{font-family:var(--mono);font-size:10.5px;text-decoration:none;color:var(--copper);opacity:.8}
+.blade:hover{color:var(--cream);background:#1B1F23}
+.blade.on{color:var(--cream);border-bottom-color:var(--copper);background:#1B1F23}
+
+/* equation display block */
+.eq{background:#15181B;border:1px solid var(--rail);border-left:3px solid var(--copper);
+  border-radius:3px;padding:16px 20px;margin:0 0 20px;font-family:var(--mono);
+  font-size:15px;color:var(--gold);overflow-x:auto}
+.eq .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--cream-mute)}
+.eq b{color:var(--cream)}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--rail);border-radius:4px;padding:18px 20px;margin:0 0 20px}
+.nameplate{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:10px}
+pre.w{font-family:var(--mono);font-size:13px;line-height:1.75;color:var(--cream-dim);margin:0;overflow-x:auto}
+pre.w b{color:var(--gold)}
+pre.w i{color:var(--hot);font-style:normal}
+pre.w u{color:var(--b3);text-decoration:none}
+
+/* callouts */
+.call{border-left:3px solid var(--b1);background:rgba(61,142,168,.07);padding:14px 17px;margin:0 0 20px;border-radius:3px}
+.call.warn{border-left-color:var(--hot);background:rgba(201,69,112,.07)}
+.call.good{border-left-color:var(--b3);background:rgba(63,143,82,.07)}
+.call h4{color:var(--cream)}
+.call p:last-child{margin-bottom:0}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:14px}
+caption{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--copper);text-transform:uppercase;padding-bottom:9px}
+th{text-align:left;font-family:var(--cond);font-size:12.5px;color:var(--cream-mute);
+  font-weight:600;border-bottom:1px solid var(--rail);padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #24282C;color:var(--cream-dim)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px}
+tr.total td{border-bottom:none;border-top:1px solid var(--copper);color:var(--cream)}
+tr.hi td{background:rgba(232,196,104,.06)}
+.ok{color:#6FC888}.no{color:#E07290}.mid{color:var(--gold)}
+
+/* by-hand grids */
+.vec{display:inline-flex;gap:3px;vertical-align:middle;margin:0 3px}
+.vec span{font-family:var(--mono);font-size:12.5px;min-width:52px;text-align:right;
+  padding:4px 7px;background:#22262A;border:1px solid var(--rail);border-radius:2px;color:var(--cream)}
+.vec.b1 span{border-color:var(--b1);color:#7FC0D4}
+.vec.b2 span{border-color:var(--b2);color:#A98BE8}
+.vec.b3 span{border-color:var(--b3);color:#6FC888}
+.vec.b4 span{border-color:var(--b4);color:#E8B270}
+.vec.hot span{border-color:var(--hot);color:#E88AA3}
+.byhand{background:#15181B;border:1px solid var(--rail);border-radius:4px;padding:16px 18px;margin:0 0 20px}
+.byhand .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px;font-size:13px}
+.byhand .lbl{font-family:var(--mono);font-size:12px;color:var(--cream-mute);min-width:74px}
+.byhand .op{font-family:var(--mono);color:var(--copper)}
+
+/* widgets */
+.w{background:var(--panel);border:1px solid var(--rail);border-radius:5px;padding:18px 20px;margin:0 0 22px}
+.wbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px;
+  padding-bottom:13px;border-bottom:1px solid var(--rail)}
+.wkey{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--cream-mute);text-transform:uppercase}
+.wbtns{display:inline-flex;gap:3px}
+.opt{font-family:var(--mono);font-size:12.5px;background:#22262A;color:var(--cream-dim);
+  border:1px solid var(--rail);border-radius:14px;padding:5px 12px;cursor:pointer}
+.opt:hover{background:#2A2F34;color:var(--cream)}
+.opt.on{background:var(--copper);border-color:var(--copper);color:#14181B;font-weight:600}
+.wbtns.wide .opt{border-radius:4px;padding:5px 13px}
+input[type=range]{accent-color:var(--copper);width:150px;vertical-align:middle}
+.wdiv{width:1px;height:20px;background:var(--rail)}
+.wcap{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:11px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.stat{flex:1;min-width:140px;background:#22262A;border:1px solid var(--rail);border-radius:4px;padding:11px 13px}
+.stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--gold);line-height:1.2}
+.stat span{display:block;font-size:11.5px;color:var(--cream-mute);margin-top:4px}
+.under{font-size:13px;color:var(--cream-dim);border-top:1px solid var(--rail);margin-top:12px;padding-top:11px}
+.under b{color:var(--gold);font-family:var(--mono)}
+svg.d{width:100%;height:auto;display:block}
+svg.d text{font-family:var(--sans)}
+
+/* code blocks */
+.code{background:#15181B;border:1px solid var(--rail);border-radius:4px;margin:0 0 20px;overflow:hidden}
+.code .hd{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--copper);
+  background:#1A1E22;padding:8px 14px;border-bottom:1px solid var(--rail);text-transform:uppercase}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;
+  line-height:1.7;color:var(--cream-dim);overflow-x:auto}
+.code pre .c{color:var(--cream-mute)}
+.code pre .k{color:var(--b2)}
+.code pre .s{color:var(--b3)}
+.code pre .h{color:var(--gold);background:rgba(232,196,104,.09)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px}
+@media(max-width:760px){.ba{grid-template-columns:1fr}}
+
+/* toc */
+.toc-row{display:flex;gap:14px;text-decoration:none;padding:14px 4px;border-bottom:1px solid #24282C}
+.toc-row:hover{background:#1B1F23}
+.toc-row u{font-family:var(--mono);font-size:12px;color:var(--copper);text-decoration:none;min-width:24px}
+.toc-row b{display:block;color:var(--cream);font-family:var(--cond);font-size:17px;font-weight:600}
+.toc-row p{margin:3px 0 0;font-size:13.5px;color:var(--cream-mute)}
+
+/* carry */
+.carry{background:rgba(184,115,51,.08);border-left:3px solid var(--copper);
+  padding:14px 17px;border-radius:3px;margin:26px 0 0;font-size:14.5px}
+.carry b{color:var(--copper-lt)}
+
+/* pager */
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:46px;
+  padding-top:22px;border-top:1px solid var(--rail)}
+.pager a{flex:1;text-decoration:none;color:var(--cream);background:var(--panel);
+  border:1px solid var(--rail);border-radius:4px;padding:12px 15px;font-family:var(--cond);font-size:15px}
+.pager a:hover{border-color:var(--copper)}
+.pager a span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;color:var(--copper)}
+.pager a.next{text-align:right}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--rail);border-radius:4px}
+figcaption{font-size:12.5px;color:var(--cream-mute);margin-top:8px}
+
+</style></head><body>
+<nav><div class="navin"><a class="blade" href="index.html"><u>00</u>Contents</a><a class="blade" href="01-memory.html"><u>01</u>Activation memory</a><a class="blade" href="02-rules.html"><u>02</u>The three rules</a><a class="blade" href="03-inverse.html"><u>03</u>Why one inverts</a><a class="blade" href="04-backward.html"><u>04</u>Reversible backward</a><a class="blade on" href="05-code.html"><u>05</u>The code</a><a class="blade" href="06-experiments.html"><u>06</u>The experiments</a><a class="blade" href="07-ceiling.html"><u>07</u>Batch ceiling</a><a class="blade" href="08-step-vs-token.html"><u>08</u>Step vs token</a><a class="blade" href="09-findings.html"><u>09</u>Findings</a></div></nav>
+<main><div class="slot">05 / THE BUILD</div><h1>The code</h1>
+<div class="eq">
+five changes, in order of dependency
+<span class="note">1. move the norms inside f &nbsp; 2. add the three combination rules &nbsp;
+3. the autograd.Function &nbsp; 4. the layer-0 bootstrap &nbsp; 5. the blend at readout</span>
+</div>
+
+<p>Every change below is real code from the project. The annotations say what each one buys, and why
+it could not have been done another way.</p>
+
+<h2>1. Move the layer norms inside f</h2>
+
+<div class="ba">
+<div class="code"><div class="hd">before — two explicit residuals</div><pre>
+<span class="k">def</span> forward(<span class="k">self</span>, x):
+    x = x + <span class="k">self</span>.attn(<span class="k">self</span>.ln1(x))
+    x = x + <span class="k">self</span>.mlp(<span class="k">self</span>.ln2(x))
+    <span class="k">return</span> x
+</pre></div>
+<div class="code"><div class="hd">after — one function f</div><pre>
+<span class="k">def</span> forward(<span class="k">self</span>, x):
+    <span class="c"># returns the UPDATE, not the new state</span>
+    a = <span class="k">self</span>.attn(<span class="k">self</span>.ln1(x))
+    m = <span class="k">self</span>.mlp(<span class="k">self</span>.ln2(x + a))
+    <span class="k">return</span> <span class="h">a + m</span>
+</pre></div>
+</div>
+
+<p><strong>What it buys:</strong> the stack can now choose how to combine <code>f(x)</code> with
+previous states. Before, the combination was hard-coded inside the block.</p>
+
+<div class="call"><h4>This is a refactor, not a different model</h4>
+<p>With <code>f(x) = attn(ln1(x)) + mlp(ln2(x + attn(ln1(x))))</code>, the rule <code>x + f(x)</code>
+is <b>algebraically identical</b> to the original two-step block. The baseline computes exactly what
+it computed before.</p>
+<p>That matters: if the refactor changed the model, the baseline would not be a valid control.</p></div>
+
+<h2>2. The three combination rules</h2>
+
+<div class="code"><div class="hd">model.py — the stack</div><pre>
+<span class="k">def</span> forward(<span class="k">self</span>, idx):
+    x = <span class="k">self</span>.embed(idx)
+
+    <span class="k">if</span> <span class="k">self</span>.variant == <span class="s">"baseline"</span>:
+        <span class="k">for</span> blk <span class="k">in</span> <span class="k">self</span>.blocks:
+            x = x + blk(x)                      <span class="c"># one chain</span>
+
+    <span class="k">elif</span> <span class="k">self</span>.variant == <span class="s">"euler"</span>:
+        <span class="k">for</span> blk <span class="k">in</span> <span class="k">self</span>.blocks:
+            x = x + <span class="k">self</span>.h * blk(x)           <span class="c"># one chain, scaled</span>
+
+    <span class="k">elif</span> <span class="k">self</span>.variant == <span class="s">"midpoint"</span>:
+        prev = x                                <span class="c"># p[l-1]</span>
+        x = x + <span class="k">self</span>.blocks[<span class="s">0</span>](x)           <span class="c"># bootstrap -> p[1]</span>
+        <span class="k">for</span> blk <span class="k">in</span> <span class="k">self</span>.blocks[<span class="s">1</span>:]:
+            <span class="h">prev, x = x, prev + <span class="s">2</span> * <span class="k">self</span>.h * blk(x)</span>
+        x = <span class="k">self</span>.blend * x + (<span class="s">1</span> - <span class="k">self</span>.blend) * prev
+</pre></div>
+
+<p>The highlighted line is the whole rule. <code>prev, x = x, ...</code> is a simultaneous
+assignment — the new state is built from <strong>the old <code>prev</code></strong>, two layers back,
+while <code>x</code> slides down to become the new <code>prev</code>.</p>
+
+<div class="panel"><div class="nameplate">why the tuple assignment matters</div>
+<pre class="w">wrong:
+  prev = x                          <b>prev is now p[l]</b>
+  x = prev + 2h*blk(x)              <b>adds to p[l], not p[l-1]</b>  &rarr; this is euler
+
+right:
+  prev, x = x, prev + 2h*blk(x)     both read the OLD values first</pre></div>
+
+<h2>3. The autograd.Function</h2>
+
+<p>This is where the memory is actually saved. PyTorch would otherwise keep every intermediate
+tensor for the backward pass — writing a custom <code>Function</code> is how you tell it not to.</p>
+
+<div class="code"><div class="hd">reversible.py — forward</div><pre>
+<span class="k">class</span> MidpointRev(torch.autograd.Function):
+
+    <span class="k">@staticmethod</span>
+    <span class="k">def</span> forward(ctx, x, blocks, h, *params):
+        <span class="k">with</span> torch.no_grad():                <span class="c"># no graph is built</span>
+            prev = x
+            x = x + blocks[<span class="s">0</span>](x)
+            <span class="k">for</span> blk <span class="k">in</span> blocks[<span class="s">1</span>:]:
+                prev, x = x, prev + <span class="s">2</span>*h*blk(x)
+
+        <span class="h">ctx.save_for_backward(x, prev)</span>      <span class="c"># ONLY the final pair</span>
+        ctx.blocks, ctx.h = blocks, h
+        <span class="k">return</span> x, prev
+</pre></div>
+
+<div class="call good"><h4>The two lines that do the work</h4>
+<p><code>torch.no_grad()</code> stops PyTorch recording the graph, so no intermediates are retained.</p>
+<p><code>save_for_backward(x, prev)</code> keeps <b>two tensors</b>, regardless of depth. A standard
+forward would have kept roughly <code>5 &times; layers</code> of them.</p></div>
+
+<div class="code"><div class="hd">reversible.py — backward</div><pre>
+    <span class="k">@staticmethod</span>
+    <span class="k">def</span> backward(ctx, g_x, g_prev):
+        x, prev = ctx.saved_tensors
+        h, blocks = ctx.h, ctx.blocks
+        g_hi, g_lo = g_x, g_prev
+
+        <span class="k">for</span> l <span class="k">in</span> <span class="k">reversed</span>(<span class="k">range</span>(<span class="s">1</span>, <span class="k">len</span>(blocks))):
+            mid = prev                          <span class="c"># this is p[l]</span>
+
+            <span class="c"># one recomputation, WITH a graph this time</span>
+            <span class="k">with</span> torch.enable_grad():
+                m = mid.detach().requires_grad_(<span class="k">True</span>)
+                out = blocks[l](m)
+
+            <span class="c"># job 1: rebuild the state below</span>
+            <span class="k">with</span> torch.no_grad():
+                <span class="h">below = x - <span class="s">2</span>*h*out</span>
+
+            <span class="c"># job 2: push gradient through that same graph</span>
+            grads = torch.autograd.grad(out, [m] + params_of(blocks[l]),
+                                        grad_outputs=g_hi * <span class="s">2</span>*h)
+            <span class="h">g_lo = g_lo + grads[<span class="s">0</span>]</span>            <span class="c"># through f</span>
+            accumulate(blocks[l], grads[<span class="s">1</span>:])
+
+            <span class="h">x, prev = mid, below</span>              <span class="c"># slide down</span>
+            g_hi, g_lo = g_lo, g_hi             <span class="c"># identity path: exact</span>
+</pre></div>
+
+<p>Three things worth reading closely:</p>
+
+<table><caption>The non-obvious lines</caption>
+<thead><tr><th>Line</th><th>Why it is written that way</th></tr></thead>
+<tbody>
+<tr><td><code>mid.detach().requires_grad_(True)</code></td>
+<td>starts a <b>fresh, one-layer graph</b>. Without the detach, autograd would try to walk back into
+the forward pass — which no longer exists.</td></tr>
+<tr><td><code>below = x - 2*h*out</code></td>
+<td>the inverse from page 03. Under <code>no_grad</code>, because this is reconstruction, not a
+gradient path.</td></tr>
+<tr class="total"><td><code>g_hi, g_lo = g_lo, g_hi</code></td>
+<td>the identity path needs <b>no computation at all</b> — the gradient passes through unchanged, so
+the two accumulators simply swap roles.</td></tr>
+</tbody></table>
+
+<h2>4. The layer-0 bootstrap</h2>
+
+<div class="code"><div class="hd">the special case, and why it is safe</div><pre>
+prev = x                        <span class="c"># p[0]</span>
+x = x + blocks[0](x)            <span class="c"># p[1] — an ORDINARY residual</span>
+</pre></div>
+
+<p>The midpoint rule needs <code>p[-1]</code>, which does not exist. Layer 0 runs as an ordinary
+residual block to manufacture the second state.</p>
+
+<div class="call"><h4>Why this does not break reversibility</h4>
+<p>The bootstrap is <b>never inverted</b>. The backward walk stops at layer 1, and <code>p[0]</code>
+falls out of layer 1's inverse rather than layer 0's.</p>
+<p>So the choice affects <em>which function the stack computes</em>, not whether it can be run
+backward. It still carries gradient, through both its identity and its f path.</p></div>
+
+<h2>5. The blend at readout</h2>
+
+<div class="code"><div class="hd">one line, at the end of the stack</div><pre>
+x = <span class="k">self</span>.blend * x + (<span class="s">1</span> - <span class="k">self</span>.blend) * prev    <span class="c"># blend = 0.5</span>
+</pre></div>
+
+<p>Midpoint carries two interleaved streams — even states feed even, odd feed odd. They can drift
+apart, and averaging the final pair is the standard fix.</p>
+
+<p><strong>It costs nothing.</strong> Both states are held anyway, so this is one multiply-add on a
+single tensor. Unused for baseline and euler, which have a single stream.</p>
+
+<h2>One more change, made before run 04</h2>
+
+<div class="ba">
+<div class="code"><div class="hd">before — a bug</div><pre>
+VAL_TOKENS = VAL_BATCHES * <span class="h">batch</span> * BLOCK
+<span class="c"># at batch 32: 655,360 tokens</span>
+<span class="c"># but val.bin holds only 500,000</span>
+</pre></div>
+<div class="code"><div class="hd">after</div><pre>
+VAL_TOKENS = <span class="h">163_840</span>   <span class="c"># fixed</span>
+<span class="c"># identical for every run,</span>
+<span class="c"># independent of batch size</span>
+</pre></div>
+</div>
+
+<div class="call warn"><h4>What this would have cost</h4>
+<p>Run 04 uses batch 32, so its validation set would have been <b>four times larger</b> than runs 01
+to 03 — and would have wrapped past the end of <code>val.bin</code>, sampling overlapping regions.</p>
+<p>The final losses would not have been comparable, which is the entire purpose of run 04. Caught
+before launch; the micro-batch builder was then verified to emit <b>byte-identical</b> batches at
+both batch sizes.</p></div>
+
+<div class="carry"><b>Carry this forward:</b> the memory saving comes from two lines —
+<code>no_grad</code> in the forward and <code>save_for_backward(x, prev)</code> — and everything else
+exists to make those two lines correct.</div>
+
+<div class="pager"><a href="04-backward.html"><span>BACK</span>Reversible backward</a>
+<a class="next" href="06-experiments.html"><span>NEXT</span>The experiments</a></div>
+</main></body></html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reversibility — a 20M model trained four times</title>
+<style>
+/* Rack & Ledger */
+:root{
+  --ink:#1C1F22; --ink2:#212528; --panel:#1A1E22; --rail:#2E3337;
+  --cream:#EDEAE3; --cream-dim:#C4C8CC; --cream-mute:#8A9298;
+  --copper:#B87333; --copper-lt:#D19A5E; --gold:#E8C468;
+  --b1:#3D8EA8; --b2:#7B4FD6; --b3:#3F8F52; --b4:#D18B32; --hot:#C94570;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --sans:-apple-system,"Segoe UI",Inter,sans-serif;
+  --cond:"SF Compact Display",-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream-dim);
+  font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:34px 26px 90px}
+h1{font-family:var(--cond);font-size:40px;line-height:1.12;color:var(--cream);
+  margin:6px 0 22px;font-weight:650;letter-spacing:-.01em}
+h2{font-family:var(--cond);font-size:26px;color:var(--cream);margin:42px 0 14px;font-weight:600}
+h3{font-family:var(--cond);font-size:19px;color:var(--cream);margin:28px 0 10px;font-weight:600}
+h4{font-family:var(--cond);font-size:16px;color:var(--cream);margin:0 0 8px;font-weight:600}
+p{margin:0 0 15px}
+a{color:var(--copper-lt)}
+strong{color:var(--cream)}
+em{color:var(--cream);font-style:italic}
+code{font-family:var(--mono);font-size:.9em;background:#22262A;padding:1px 5px;border-radius:3px;color:var(--gold)}
+.slot{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--copper);text-transform:uppercase}
+.lede{font-size:18px;color:var(--cream);line-height:1.6}
+
+/* nav */
+nav{background:#15181B;border-bottom:1px solid var(--rail);position:sticky;top:0;z-index:50}
+.navin{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;gap:2px;overflow-x:auto}
+.blade{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:11px 12px;text-decoration:none;
+  color:var(--cream-mute);font-size:12.5px;border-bottom:2px solid transparent;white-space:nowrap}
+.blade u{font-family:var(--mono);font-size:10.5px;text-decoration:none;color:var(--copper);opacity:.8}
+.blade:hover{color:var(--cream);background:#1B1F23}
+.blade.on{color:var(--cream);border-bottom-color:var(--copper);background:#1B1F23}
+
+/* equation display block */
+.eq{background:#15181B;border:1px solid var(--rail);border-left:3px solid var(--copper);
+  border-radius:3px;padding:16px 20px;margin:0 0 20px;font-family:var(--mono);
+  font-size:15px;color:var(--gold);overflow-x:auto}
+.eq .note{display:block;margin-top:8px;font-family:var(--sans);font-size:12.5px;color:var(--cream-mute)}
+.eq b{color:var(--cream)}
+
+/* panels */
+.panel{background:var(--panel);border:1px solid var(--rail);border-radius:4px;padding:18px 20px;margin:0 0 20px}
+.nameplate{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:10px}
+pre.w{font-family:var(--mono);font-size:13px;line-height:1.75;color:var(--cream-dim);margin:0;overflow-x:auto}
+pre.w b{color:var(--gold)}
+pre.w i{color:var(--hot);font-style:normal}
+pre.w u{color:var(--b3);text-decoration:none}
+
+/* callouts */
+.call{border-left:3px solid var(--b1);background:rgba(61,142,168,.07);padding:14px 17px;margin:0 0 20px;border-radius:3px}
+.call.warn{border-left-color:var(--hot);background:rgba(201,69,112,.07)}
+.call.good{border-left-color:var(--b3);background:rgba(63,143,82,.07)}
+.call h4{color:var(--cream)}
+.call p:last-child{margin-bottom:0}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:14px}
+caption{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--copper);text-transform:uppercase;padding-bottom:9px}
+th{text-align:left;font-family:var(--cond);font-size:12.5px;color:var(--cream-mute);
+  font-weight:600;border-bottom:1px solid var(--rail);padding:8px 10px}
+td{padding:8px 10px;border-bottom:1px solid #24282C;color:var(--cream-dim)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px}
+tr.total td{border-bottom:none;border-top:1px solid var(--copper);color:var(--cream)}
+tr.hi td{background:rgba(232,196,104,.06)}
+.ok{color:#6FC888}.no{color:#E07290}.mid{color:var(--gold)}
+
+/* by-hand grids */
+.vec{display:inline-flex;gap:3px;vertical-align:middle;margin:0 3px}
+.vec span{font-family:var(--mono);font-size:12.5px;min-width:52px;text-align:right;
+  padding:4px 7px;background:#22262A;border:1px solid var(--rail);border-radius:2px;color:var(--cream)}
+.vec.b1 span{border-color:var(--b1);color:#7FC0D4}
+.vec.b2 span{border-color:var(--b2);color:#A98BE8}
+.vec.b3 span{border-color:var(--b3);color:#6FC888}
+.vec.b4 span{border-color:var(--b4);color:#E8B270}
+.vec.hot span{border-color:var(--hot);color:#E88AA3}
+.byhand{background:#15181B;border:1px solid var(--rail);border-radius:4px;padding:16px 18px;margin:0 0 20px}
+.byhand .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px;font-size:13px}
+.byhand .lbl{font-family:var(--mono);font-size:12px;color:var(--cream-mute);min-width:74px}
+.byhand .op{font-family:var(--mono);color:var(--copper)}
+
+/* widgets */
+.w{background:var(--panel);border:1px solid var(--rail);border-radius:5px;padding:18px 20px;margin:0 0 22px}
+.wbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px;
+  padding-bottom:13px;border-bottom:1px solid var(--rail)}
+.wkey{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--cream-mute);text-transform:uppercase}
+.wbtns{display:inline-flex;gap:3px}
+.opt{font-family:var(--mono);font-size:12.5px;background:#22262A;color:var(--cream-dim);
+  border:1px solid var(--rail);border-radius:14px;padding:5px 12px;cursor:pointer}
+.opt:hover{background:#2A2F34;color:var(--cream)}
+.opt.on{background:var(--copper);border-color:var(--copper);color:#14181B;font-weight:600}
+.wbtns.wide .opt{border-radius:4px;padding:5px 13px}
+input[type=range]{accent-color:var(--copper);width:150px;vertical-align:middle}
+.wdiv{width:1px;height:20px;background:var(--rail)}
+.wcap{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;color:var(--copper);
+  text-transform:uppercase;margin-bottom:11px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.stat{flex:1;min-width:140px;background:#22262A;border:1px solid var(--rail);border-radius:4px;padding:11px 13px}
+.stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--gold);line-height:1.2}
+.stat span{display:block;font-size:11.5px;color:var(--cream-mute);margin-top:4px}
+.under{font-size:13px;color:var(--cream-dim);border-top:1px solid var(--rail);margin-top:12px;padding-top:11px}
+.under b{color:var(--gold);font-family:var(--mono)}
+svg.d{width:100%;height:auto;display:block}
+svg.d text{font-family:var(--sans)}
+
+/* code blocks */
+.code{background:#15181B;border:1px solid var(--rail);border-radius:4px;margin:0 0 20px;overflow:hidden}
+.code .hd{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--copper);
+  background:#1A1E22;padding:8px 14px;border-bottom:1px solid var(--rail);text-transform:uppercase}
+.code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;
+  line-height:1.7;color:var(--cream-dim);overflow-x:auto}
+.code pre .c{color:var(--cream-mute)}
+.code pre .k{color:var(--b2)}
+.code pre .s{color:var(--b3)}
+.code pre .h{color:var(--gold);background:rgba(232,196,104,.09)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 20px}
+@media(max-width:760px){.ba{grid-template-columns:1fr}}
+
+/* toc */
+.toc-row{display:flex;gap:14px;text-decoration:none;padding:14px 4px;border-bottom:1px solid #24282C}
+.toc-row:hover{background:#1B1F23}
+.toc-row u{font-family:var(--mono);font-size:12px;color:var(--copper);text-decoration:none;min-width:24px}
+.toc-row b{display:block;color:var(--cream);font-family:var(--cond);font-size:17px;font-weight:600}
+.toc-row p{margin:3px 0 0;font-size:13.5px;color:var(--cream-mute)}
+
+/* carry */
+.carry{background:rgba(184,115,51,.08);border-left:3px solid var(--copper);
+  padding:14px 17px;border-radius:3px;margin:26px 0 0;font-size:14.5px}
+.carry b{color:var(--copper-lt)}
+
+/* pager */
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:46px;
+  padding-top:22px;border-top:1px solid var(--rail)}
+.pager a{flex:1;text-decoration:none;color:var(--cream);background:var(--panel);
+  border:1px solid var(--rail);border-radius:4px;padding:12px 15px;font-family:var(--cond);font-size:15px}
+.pager a:hover{border-color:var(--copper)}
+.pager a span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;color:var(--copper)}
+.pager a.next{text-align:right}
+figure{margin:0 0 22px}
+figure img{width:100%;border:1px solid var(--rail);border-radius:4px}
+figcaption{font-size:12.5px;color:var(--cream-mute);margin-top:8px}
+
+</style></head><body>
+<nav><div class="navin"><a class="blade on" href="index.html"><u>00</u>Contents</a><a class="blade" href="01-memory.html"><u>01</u>Activation memory</a><a class="blade" href="02-rules.html"><u>02</u>The three rules</a><a class="blade" href="03-inverse.html"><u>03</u>Why one inverts</a><a class="blade" href="04-backward.html"><u>04</u>Reversible backward</a><a class="blade" href="05-code.html"><u>05</u>The code</a><a class="blade" href="06-experiments.html"><u>06</u>The experiments</a><a class="blade" href="07-ceiling.html"><u>07</u>Batch ceiling</a><a class="blade" href="08-step-vs-token.html"><u>08</u>Step vs token</a><a class="blade" href="09-findings.html"><u>09</u>Findings</a></div></nav>
+<main>
+<div class="slot">REVERSIBILITY</div>
+<h1>Throwing away the activations</h1>
+<p class="lede">A 19.96M-parameter transformer trained four times on 50M tokens of TinyStories,
+on a 16 GB M1 Pro. The question: can you throw away the stored activations and rebuild them during
+the backward pass, and what does it cost?</p>
+
+<h2>The answer, in one table</h2>
+
+<table>
+<caption>All four runs, 50,003,968 tokens each, same seed, same data order</caption>
+<thead><tr><th>Run</th><th>Variant</th><th class="n">Batch</th><th class="n">Steps</th>
+<th class="n">Final loss</th><th class="n">Tokens/s</th><th class="n">Peak GB</th></tr></thead>
+<tbody>
+<tr><td>01</td><td>baseline</td><td class="n">8</td><td class="n">6,104</td><td class="n">1.7686</td><td class="n">12,496</td><td class="n">5.57</td></tr>
+<tr><td>02</td><td>euler</td><td class="n">8</td><td class="n">6,104</td><td class="n mid">1.7492</td><td class="n">12,726</td><td class="n">5.57</td></tr>
+<tr><td>03</td><td>midpoint_rev</td><td class="n">8</td><td class="n">6,104</td><td class="n">1.7682</td><td class="n">10,231</td><td class="n mid">3.82</td></tr>
+<tr class="total"><td>04</td><td>midpoint_rev</td><td class="n">32</td><td class="n">1,526</td><td class="n no">2.0870</td><td class="n">9,488</td><td class="n">9.32</td></tr>
+</tbody></table>
+
+<h2>Three findings</h2>
+
+<div class="call good"><h4>1. Reversibility is free in loss terms</h4>
+<p>Run 03 finished <b>0.022%</b> from the baseline while using <b>51.7% less memory</b>. It costs
+<b>1.22&times;</b> per step — the extra forward evaluation the reconstruction needs.</p></div>
+
+<div class="call"><h4>2. Euler trains best and cannot be reversed</h4>
+<p>It beat the baseline by 1.10% on loss while being <b>65% wrong</b> on reconstruction.
+Reconstruction quality and optimisation quality turn out to be independent properties.</p></div>
+
+<div class="call warn"><h4>3. The bigger batch is better per step and worse per token</h4>
+<p>At step 1,526 run 04 was <b>0.18 ahead</b> of run 03. At 50M tokens it was <b>0.32 behind</b>.
+Same model, same data — the difference is 1,526 optimizer steps against 6,104.</p></div>
+
+<h2>How the pages fit together</h2>
+
+<svg class="d" viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+<text x="0" y="14" font-size="11" fill="#8A9298">THE MATHS</text>
+<rect x="0" y="24" width="300" height="56" rx="4" fill="rgba(123,79,214,.12)" stroke="#7B4FD6"/>
+<text x="12" y="46" font-size="13" fill="#EDEAE3">01 &rarr; 02 &rarr; 03 &rarr; 04</text>
+<text x="12" y="66" font-size="11.5" fill="#8A9298">why memory is the problem, three rules,</text>
+<text x="12" y="80" font-size="11.5" fill="#8A9298">which inverts, how the backward works</text>
+<text x="330" y="14" font-size="11" fill="#8A9298">THE BUILD</text>
+<rect x="330" y="24" width="150" height="56" rx="4" fill="rgba(61,142,168,.12)" stroke="#3D8EA8"/>
+<text x="342" y="46" font-size="13" fill="#EDEAE3">05</text>
+<text x="342" y="66" font-size="11.5" fill="#8A9298">the actual code changes</text>
+<text x="510" y="14" font-size="11" fill="#8A9298">THE EVIDENCE</text>
+<rect x="510" y="24" width="380" height="56" rx="4" fill="rgba(63,143,82,.12)" stroke="#3F8F52"/>
+<text x="522" y="46" font-size="13" fill="#EDEAE3">06 &rarr; 07 &rarr; 08 &rarr; 09</text>
+<text x="522" y="66" font-size="11.5" fill="#8A9298">four runs, the batch ceiling, the trade-off, what it all means</text>
+<text x="0" y="112" font-size="12" fill="#C4C8CC">Read straight through, or jump to 08 for the single most interesting result.</text>
+<line x1="0" y1="128" x2="890" y2="128" stroke="#2E3337"/>
+<text x="0" y="152" font-size="11" fill="#8A9298">TWO GATES HAD TO PASS BEFORE ANY TRAINING</text>
+<rect x="0" y="162" width="430" height="44" rx="4" fill="#1A1E22" stroke="#B87333"/>
+<text x="12" y="182" font-size="12.5" fill="#EDEAE3">Gate 1 &mdash; does the rule invert?</text>
+<text x="12" y="198" font-size="11.5" fill="#6FC888">midpoint 9.574e-07 PASS &nbsp;&middot;&nbsp; euler 6.531e-01 FAIL</text>
+<rect x="460" y="162" width="430" height="44" rx="4" fill="#1A1E22" stroke="#B87333"/>
+<text x="472" y="182" font-size="12.5" fill="#EDEAE3">Gate 2 &mdash; do the gradients match?</text>
+<text x="472" y="198" font-size="11.5" fill="#6FC888">4.090e-06 relative, 0 of 63 tensors over tolerance &mdash; PASS</text>
+</svg>
+
+<h2>Contents</h2>
+
+<a class="toc-row" href="01-memory.html"><u>01</u><div><b>Activation memory</b>
+<p>Why the backward pass needs the forward activations, and how much that costs.</p></div></a>
+<a class="toc-row" href="02-rules.html"><u>02</u><div><b>The three rules</b>
+<p>Baseline, euler and midpoint, worked by hand on a 4-element vector.</p></div></a>
+<a class="toc-row" href="03-inverse.html"><u>03</u><div><b>Why one inverts and one does not</b>
+<p>The algebra, the backward walk, and what a ULP is.</p></div></a>
+<a class="toc-row" href="04-backward.html"><u>04</u><div><b>The reversible backward pass</b>
+<p>One recomputation doing two jobs, and where the gradients come from.</p></div></a>
+<a class="toc-row" href="05-code.html"><u>05</u><div><b>The code</b>
+<p>Every change, before and after, with what each one buys.</p></div></a>
+<a class="toc-row" href="06-experiments.html"><u>06</u><div><b>The experiments</b>
+<p>Four runs, two gates, and how comparability was enforced.</p></div></a>
+<a class="toc-row" href="07-ceiling.html"><u>07</u><div><b>The batch ceiling</b>
+<p>Where the machine falls over, and the statistical trap that nearly picked batch 80.</p></div></a>
+<a class="toc-row" href="08-step-vs-token.html"><u>08</u><div><b>Better per step, worse per token</b>
+<p>The most interesting result, and why throughput has nothing to do with it.</p></div></a>
+<a class="toc-row" href="09-findings.html"><u>09</u><div><b>Findings and limits</b>
+<p>Seven findings with their numbers, and what this experiment cannot tell you.</p></div></a>
+
+<div class="pager"><a href="09-findings.html"><span>LAST PAGE</span>Findings</a>
+<a class="next" href="01-memory.html"><span>START</span>Activation memory</a></div>
+</main></body></html>
